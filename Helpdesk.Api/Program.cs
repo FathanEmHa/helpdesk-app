@@ -32,6 +32,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<UserService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(

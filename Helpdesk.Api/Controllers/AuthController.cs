@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace Helpdesk.Controllers;
 
 [ApiController]
-[Route("api/auth")]
+[Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
