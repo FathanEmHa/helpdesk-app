@@ -1,4 +1,4 @@
-namespace Helpdesk.Dtos;
+namespace Helpdesk.Dtos.Auth;
 
 public class AuthResponse
 {

@@ -1,6 +1,8 @@
 using Helpdesk.Services;
-using Helpdesk.Dtos;
+using Helpdesk.Dtos.Auth;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Helpdesk.Controllers;
 
@@ -33,6 +35,23 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login(LoginRequest request)
     {
         var result = await _authService.Login(request);
+
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> Me()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userId, out var id))
+            return Unauthorized();
+
+        var result = await _authService.Me(id);
+
+        if (result == null)
+            return NotFound();
 
         return Ok(result);
     }

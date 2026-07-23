@@ -127,3 +127,4 @@
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/Helpdesk.Api.pdb
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/Helpdesk.Api.genruntimeconfig.cache
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/ref/Helpdesk.Api.dll
+/home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/Helpdesk.Api.sourcelink.json

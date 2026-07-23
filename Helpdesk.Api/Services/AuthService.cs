@@ -1,6 +1,6 @@
 using BCrypt.Net;
 using Helpdesk.Data;
-using Helpdesk.Dtos;
+using Helpdesk.Dtos.Auth;
 using Helpdesk.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,6 +38,22 @@ public class AuthService
         return new AuthResponse
         {
             Token = token,
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            Role = user.Role.ToString()
+        };
+    }
+
+    public async Task<MeResponse?> Me(int id)
+    {
+        var user = await _context.Users.FindAsync(id);
+
+        if (user == null)
+            return null;
+
+        return new MeResponse
+        {
             Id = user.Id,
             Name = user.Name,
             Email = user.Email,
