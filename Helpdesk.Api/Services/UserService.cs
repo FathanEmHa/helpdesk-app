@@ -1,3 +1,4 @@
+using BCrypt.Net;
 using Helpdesk.Data;
 using Helpdesk.Dtos.User;
 using Helpdesk.Models;
@@ -43,5 +44,69 @@ public class UserService
 			Email = user.Email,
 			Role = user.Role.ToString()
 		};
+	}
+
+	public async Task<UserResponse> Create(CreateUserRequest request)
+	{
+		var existingUser = await _context.Users
+			.FirstOrDefaultAsync(u => u.Email == request.Email);
+
+		if (existingUser != null)
+		{
+			throw new Exception("Email already exists");
+		}
+
+		var user = new User
+		{
+			Name = request.Name,
+			Email = request.Email,
+			PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+		};
+
+		_context.Users.Add(user);
+
+		await _context.SaveChangesAsync();
+
+		return new UserResponse
+		{
+			Id = user.Id,
+			Name = user.Name,
+			Email = user.Email,
+			Role = user.Role.ToString()
+		};
+	}
+
+	public async Task<UserResponse?> Update(int id, UpdateUserRequest request)
+	{
+	    var user = await _context.Users.FindAsync(id);
+
+	    if (user == null)
+	        return null;
+
+	    var existingUser = await _context.Users
+	        .FirstOrDefaultAsync(u =>
+	            u.Email == request.Email &&
+	            u.Id != id);
+
+	    if (existingUser != null)
+	        throw new Exception("Email already exists");
+
+	    user.Name = request.Name;
+	    user.Email = request.Email;
+
+	    if (!string.IsNullOrWhiteSpace(request.Password))
+	    {
+	        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+	    }
+
+	    await _context.SaveChangesAsync();
+
+	    return new UserResponse
+	    {
+	        Id = user.Id,
+	        Name = user.Name,
+	        Email = user.Email,
+	        Role = user.Role.ToString()
+	    };
 	}
 }

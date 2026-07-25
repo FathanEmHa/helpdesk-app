@@ -35,4 +35,23 @@ public class UsersController : ControllerBase
 
 		return Ok(user);
 	}
+
+	[HttpPost("create")]
+	public async Task<IActionResult> Create(CreateUserRequest request)
+	{
+		var user = await _userService.Create(request);
+
+		return Ok(user);
+	}
+
+	[HttpPut("{id}")]
+	public async Task<IActionResult> Update(int id, UpdateUserRequest request)
+	{
+		var user = await _userService.Update(id, request);
+
+		if (user == null)
+			return NotFound();
+
+		return Ok(user);
+	}
 }
