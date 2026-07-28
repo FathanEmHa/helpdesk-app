@@ -1,86 +1,102 @@
 using Helpdesk.Data;
 using Helpdesk.Dtos.Ticket;
-using Helpdesk.Models;
 using Helpdesk.Exceptions;
+using Helpdesk.Mappers;
+using Helpdesk.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;
 
 public class TicketService
 {
-	private readonly AppDbContext _context;
+    private readonly AppDbContext _context;
 
-	public TicketService(AppDbContext context)
-	{
-		_context = context;
-	}
+    public TicketService(AppDbContext context)
+    {
+        _context = context;
+    }
 
-	public async Task<List<TicketListResponse>> GetAll()
-	{
-		return await _context.Tickets
-			.Select(t => new TicketListResponse
-			{
-				Id = t.Id,
-		        Title = t.Title,
-		        Status = t.Status.ToString(),
-		        Priority = t.Priority.ToString(),
+    public async Task<List<TicketListResponse>> GetAll()
+    {
+        return await _context.Tickets
+            .Select(t => new TicketListResponse
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Status = t.Status.ToString(),
+                Priority = t.Priority.ToString(),
+                UserId = t.UserId,
+                UserName = t.User.Name
+            })
+            .ToListAsync();
+    }
 
-		        UserId = t.UserId,
-		        UserName = t.User.Name
-			})
-			.ToListAsync();
-	}
+    public async Task<TicketDetailResponse> GetById(int id)
+    {
+        var ticket = await _context.Tickets
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Id == id);
 
-	public async Task<TicketDetailResponse> GetById(int id)
-	{
-	    var ticket = await _context.Tickets
-	        .Where(t => t.Id == id)
-	        .Select(t => new TicketDetailResponse
-	        {
-	            Id = t.Id,
-	            Title = t.Title,
-	            Description = t.Description,
-	            Status = t.Status.ToString(),
-	            Priority = t.Priority.ToString(),
-	            UserId = t.UserId,
-	            UserName = t.User.Name
-	        })
-	        .FirstOrDefaultAsync();
+        if (ticket == null)
+            throw new NotFoundException("Ticket not found.");
 
-	    if (ticket == null)
-	        throw new NotFoundException("Ticket not found.");
+        return TicketMapper.ToDetailResponse(ticket);
+    }
 
-	    return ticket;
-	}
+    public async Task<TicketDetailResponse> Create(int userId, CreateTicketRequest request)
+    {
+        var user = await _context.Users
+        	.FirstOrDefaultAsync(u => u.Id == userId);
 
-	public async Task<TicketDetailResponse> Create(int userId, CreateTicketRequest request)
-	{
-	    var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            throw new NotFoundException("User not found.");
 
-	    if (user == null)
-	        throw new NotFoundException("User not found.");
+        var ticket = new Ticket
+        {
+            Title = request.Title.Trim(),
+            Description = request.Description.Trim(),
+            Priority = request.Priority!.Value,
+            Status = TicketStatus.Open,
+            UserId = userId,
+            User = user
+        };
 
-	    var ticket = new Models.Ticket
-	    {
-	        Title = request.Title.Trim(),
-	        Description = request.Description.Trim(),
-	        Priority = request.Priority!.Value,
-	        Status = TicketStatus.Open,
-	        UserId = userId
-	    };
+        _context.Tickets.Add(ticket);
 
-	    _context.Tickets.Add(ticket);
-	    await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
-	    return new TicketDetailResponse
-	    {
-	        Id = ticket.Id,
-	        Title = ticket.Title,
-	        Description = ticket.Description,
-	       	Status = ticket.Status.ToString(),
-	        Priority = ticket.Priority.ToString(),
-	        UserId = user.Id,
-	        UserName = user.Name
-	    };
-	}
+        return TicketMapper.ToDetailResponse(ticket);
+    }
+
+    public async Task<TicketDetailResponse> Update(int id, UpdateTicketRequest request)
+    {
+        var ticket = await _context.Tickets
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (ticket == null)
+            throw new NotFoundException("Ticket not found.");
+
+        ticket.Title = request.Title.Trim();
+        ticket.Description = request.Description.Trim();
+        ticket.Priority = request.Priority!.Value;
+        ticket.Status = request.Status!.Value;
+
+        await _context.SaveChangesAsync();
+
+        return TicketMapper.ToDetailResponse(ticket);
+    }
+
+    public async Task Delete(int id)
+    {
+        var ticket = await _context.Tickets
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (ticket == null)
+            throw new NotFoundException("Ticket not found.");
+
+        ticket.DeletedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+    }
 }

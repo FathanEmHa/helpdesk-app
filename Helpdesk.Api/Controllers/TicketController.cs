@@ -48,20 +48,20 @@ public class TicketsController : ControllerBase
 	    );
 	}
 
-	// [HttpPut("{id}")]
-	// public async Task<IActionResult> Update(int id, UpdateTicketRequest request)
-	// {
-	// 	var ticket = await _ticketService.Update(id, request);
+	[HttpPut("{id}")]
+	public async Task<IActionResult> Update(int id, UpdateTicketRequest request)
+	{
+		var ticket = await _ticketService.Update(id, request);
 
-	// 	return Ok(ticket);
-	// }
+		return Ok(ticket);
+	}
 
-	// [HttpDelete("{id}")]
-	// public async Task<IActionResult> Delete(int id)
-	// {
-	// 	var deleted = await _ticketService.Delete(id);
+	[HttpDelete("{id}")]
+	public async Task<IActionResult> Delete(int id)
+	{
+		await _ticketService.Delete(id);
 
-	// 	return NoContent();
-	// }
+		return NoContent();
+	}
 }
 

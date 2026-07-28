@@ -18,5 +18,13 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>()
             .Property(u => u.Role)
             .HasConversion<string>();
+
+        modelBuilder.Entity<User>()
+            .HasQueryFilter(u => u.Status == UserStatus.Active);
+
+        modelBuilder.Entity<Ticket>()
+            .HasQueryFilter(t => t.DeletedAt == null);
+
+        base.OnModelCreating(modelBuilder);
     }
 }

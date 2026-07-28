@@ -56,7 +56,7 @@ public class UsersController : ControllerBase
 	[HttpDelete("{id}")]
 	public async Task<IActionResult> Delete(int id)
 	{
-		var deleted = await _userService.Delete(id);
+		await _userService.Delete(id);
 
 		return NoContent();
 	}
