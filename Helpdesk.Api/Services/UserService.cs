@@ -35,19 +35,22 @@ public class UserService
 
 	public async Task<UserResponse?> GetById(int id)
 	{
-		var user = await _context.Users.FindAsync(id);
+		var user = await _context.Users
+	        .Where(u => u.Id == id)
+	        .Select(u => new UserResponse
+	        {
+	            Id = u.Id,
+				Name = u.Name,
+				Email = u.Email,
+				Role = u.Role.ToString(),
+	    		Status = u.Status.ToString()
+	        })
+	        .FirstOrDefaultAsync();
 
-		if (user == null)
-			throw new NotFoundException("User not found.");
+	    if (user == null)
+	        throw new NotFoundException("User not found.");
 
-		return new UserResponse
-		{
-			Id = user.Id,
-			Name = user.Name,
-			Email = user.Email,
-			Role = user.Role.ToString(),
-    		Status = user.Status.ToString()
-		};
+	    return user;
 	}
 
 	public async Task<UserResponse> Create(CreateUserRequest request)
@@ -96,7 +99,7 @@ public class UserService
 
 	    user.Name = request.Name;
 	    user.Email = request.Email;
-	    user.Status = request.Status;
+	    user.Status = request.Status!.Value;
 
 	    if (!string.IsNullOrWhiteSpace(request.Password))
 	    {

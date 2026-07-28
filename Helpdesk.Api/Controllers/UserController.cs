@@ -1,7 +1,7 @@
 using Helpdesk.Services;
 using Helpdesk.Dtos.User;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Helpdesk.Controllers;
 
@@ -33,12 +33,16 @@ public class UsersController : ControllerBase
 		return Ok(user);
 	}
 
-	[HttpPost("create")]
+	[HttpPost]
 	public async Task<IActionResult> Create(CreateUserRequest request)
 	{
 		var user = await _userService.Create(request);
 
-		return Ok(user);
+		return CreatedAtAction(
+	        nameof(GetById),
+	        new { id = user.Id },
+	        user
+	    );
 	}
 
 	[HttpPut("{id}")]

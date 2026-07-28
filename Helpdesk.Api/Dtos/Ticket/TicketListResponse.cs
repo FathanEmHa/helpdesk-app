@@ -1,15 +1,10 @@
-using System.ComponentModel.DataAnnotations;
-using Helpdesk.Models;
-
 namespace Helpdesk.Dtos.Ticket;
 
-public class TicketResponse
+public class TicketListResponse
 {
     public int Id { get; set; }
 
     public string Title { get; set; } = "";
-
-    public string Description { get; set; } = "";
 
     public string Status { get; set; } = "";
 

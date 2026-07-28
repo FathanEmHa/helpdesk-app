@@ -16,5 +16,5 @@ public class UpdateUserRequest
     public string? Password { get; set; }
 
     [Required(ErrorMessage = "Status is required.")]
-    public UserStatus Status { get; set; }
+    public UserStatus? Status { get; set; }
 }
