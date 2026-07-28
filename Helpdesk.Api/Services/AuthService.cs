@@ -20,15 +20,23 @@ public class AuthService
     public async Task<AuthResponse> Login(LoginRequest request)
     {
         var user = await _context.Users
-            .FirstOrDefaultAsync(x => x.Email == request.Email);
+            .FirstOrDefaultAsync(u =>
+                u.Email == request.Email &&
+                u.Status == UserStatus.Active);
 
         if (user == null)
             throw new Exception("Invalid email or password.");
+
+        Console.WriteLine($"Email: {request.Email}");
+        Console.WriteLine($"Password: {request.Password}");
+        Console.WriteLine($"Hash: {user.PasswordHash}");
 
         var validPassword = BCrypt.Net.BCrypt.Verify(
             request.Password,
             user.PasswordHash
         );
+
+        Console.WriteLine($"Valid: {validPassword}");
 
         if (!validPassword)
             throw new Exception("Invalid email or password.");

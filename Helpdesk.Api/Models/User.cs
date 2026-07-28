@@ -13,4 +13,6 @@ public class User
     public Role Role { get; set; } = Role.User;
 
     public string PhoneNumber { get; set; } = "";
+
+    public UserStatus Status { get; set; } = UserStatus.Active;
 }

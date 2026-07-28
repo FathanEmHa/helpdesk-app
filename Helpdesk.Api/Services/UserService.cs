@@ -20,12 +20,14 @@ public class UserService
 	    return await _context.Users
 	    	// .OrderByDescending(u => u.CreatedAt)
 	    	// .Take(10)
+	    	.Where(u => u.Status == UserStatus.Active)
 	        .Select(u => new UserResponse
 	        {
 	            Id = u.Id,
 	            Name = u.Name,
 	            Email = u.Email,
-	            Role = u.Role.ToString()
+	            Role = u.Role.ToString(),
+	            Status = u.Status.ToString()
 	        })
 	        .ToListAsync();
 	}
@@ -42,7 +44,8 @@ public class UserService
 			Id = user.Id,
 			Name = user.Name,
 			Email = user.Email,
-			Role = user.Role.ToString()
+			Role = user.Role.ToString(),
+    		Status = user.Status.ToString()
 		};
 	}
 
@@ -72,7 +75,8 @@ public class UserService
 			Id = user.Id,
 			Name = user.Name,
 			Email = user.Email,
-			Role = user.Role.ToString()
+			Role = user.Role.ToString(),
+			Status = user.Status.ToString()
 		};
 	}
 
@@ -81,7 +85,9 @@ public class UserService
 	    var user = await _context.Users.FindAsync(id);
 
 	    if (user == null)
+	    {
 	        return null;
+	    }
 
 	    var existingUser = await _context.Users
 	        .FirstOrDefaultAsync(u =>
@@ -89,10 +95,13 @@ public class UserService
 	            u.Id != id);
 
 	    if (existingUser != null)
+	    {
 	        throw new Exception("Email already exists");
+	    }
 
 	    user.Name = request.Name;
 	    user.Email = request.Email;
+	    user.Status = request.Status;
 
 	    if (!string.IsNullOrWhiteSpace(request.Password))
 	    {
@@ -106,7 +115,24 @@ public class UserService
 	        Id = user.Id,
 	        Name = user.Name,
 	        Email = user.Email,
-	        Role = user.Role.ToString()
+	        Role = user.Role.ToString(),
+	        Status = user.Status.ToString()
 	    };
+	}
+
+	public async Task<bool> Delete(int id)
+	{
+		var user = await _context.Users.FindAsync(id);
+
+		if (user == null)
+			return false;
+
+		user.Status = UserStatus.Inactive;
+
+		// _context.Users.Remove(user);
+
+		await _context.SaveChangesAsync();
+
+		return true;
 	}
 }
