@@ -18,6 +18,16 @@ public class ExceptionMiddleware
         {
             await _next(context);
         }
+        catch (ValidationException ex)
+        {
+            context.Response.StatusCode = ex.StatusCode;
+
+            await context.Response.WriteAsJsonAsync(new
+            {
+                message = ex.Message,
+                errors = ex.Errors
+            });
+        }
         catch (AppException ex)
         {
             context.Response.StatusCode = ex.StatusCode;
