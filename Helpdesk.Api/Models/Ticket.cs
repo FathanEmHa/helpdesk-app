@@ -8,9 +8,10 @@ public class Ticket
 
     public string Description { get; set; } = "";
 
-    public string Status { get; set; } = "Open";
+    public TicketPriority Priority { get; set; } = TicketPriority.Medium;
+
+    public TicketStatus Status { get; set; } = TicketStatus.Open;
 
     public int UserId { get; set; }
-
     public User User { get; set; } = null!;
 }
