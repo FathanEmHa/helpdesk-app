@@ -2,6 +2,7 @@ using BCrypt.Net;
 using Helpdesk.Data;
 using Helpdesk.Dtos.User;
 using Helpdesk.Models;
+using Helpdesk.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;
@@ -37,7 +38,7 @@ public class UserService
 		var user = await _context.Users.FindAsync(id);
 
 		if (user == null)
-			return null;
+			throw new NotFoundException("User not found.");
 
 		return new UserResponse
 		{
@@ -55,9 +56,7 @@ public class UserService
 			.FirstOrDefaultAsync(u => u.Email == request.Email);
 
 		if (existingUser != null)
-		{
-			throw new Exception("Email already exists");
-		}
+			throw new ConflictException("Email already exists");
 
 		var user = new User
 		{
@@ -85,9 +84,7 @@ public class UserService
 	    var user = await _context.Users.FindAsync(id);
 
 	    if (user == null)
-	    {
-	        return null;
-	    }
+	    	throw new NotFoundException("User not found.");
 
 	    var existingUser = await _context.Users
 	        .FirstOrDefaultAsync(u =>
@@ -95,9 +92,7 @@ public class UserService
 	            u.Id != id);
 
 	    if (existingUser != null)
-	    {
-	        throw new Exception("Email already exists");
-	    }
+	    	throw new ConflictException("Email already exists.");
 
 	    user.Name = request.Name;
 	    user.Email = request.Email;
@@ -125,7 +120,7 @@ public class UserService
 		var user = await _context.Users.FindAsync(id);
 
 		if (user == null)
-			return false;
+			throw new NotFoundException("User not found.");
 
 		user.Status = UserStatus.Inactive;
 

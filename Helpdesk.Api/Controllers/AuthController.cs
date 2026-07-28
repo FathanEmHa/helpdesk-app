@@ -50,8 +50,6 @@ public class AuthController : ControllerBase
 
         var result = await _authService.Me(id);
 
-        if (result == null)
-            return NotFound();
 
         return Ok(result);
     }

@@ -2,6 +2,7 @@ using BCrypt.Net;
 using Helpdesk.Data;
 using Helpdesk.Dtos.Auth;
 using Helpdesk.Models;
+using Helpdesk.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;
@@ -25,21 +26,15 @@ public class AuthService
                 u.Status == UserStatus.Active);
 
         if (user == null)
-            throw new Exception("Invalid email or password.");
-
-        Console.WriteLine($"Email: {request.Email}");
-        Console.WriteLine($"Password: {request.Password}");
-        Console.WriteLine($"Hash: {user.PasswordHash}");
+            throw new UnauthorizedException("Invalid email or password.");
 
         var validPassword = BCrypt.Net.BCrypt.Verify(
             request.Password,
             user.PasswordHash
         );
 
-        Console.WriteLine($"Valid: {validPassword}");
-
         if (!validPassword)
-            throw new Exception("Invalid email or password.");
+            throw new UnauthorizedException("Invalid email or password.");
 
         var token = _jwtService.GenerateToken(user);
 
@@ -58,7 +53,7 @@ public class AuthService
         var user = await _context.Users.FindAsync(id);
 
         if (user == null)
-            return null;
+            throw new NotFoundException("User not found.");
 
         return new MeResponse
         {
