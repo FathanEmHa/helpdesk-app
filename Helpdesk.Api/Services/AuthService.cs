@@ -3,6 +3,7 @@ using Helpdesk.Data;
 using Helpdesk.Dtos.Auth;
 using Helpdesk.Models;
 using Helpdesk.Exceptions;
+using Helpdesk.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;

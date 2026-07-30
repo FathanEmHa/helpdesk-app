@@ -4,6 +4,7 @@ using Helpdesk.Dtos.User;
 using Helpdesk.Models;
 using Helpdesk.Exceptions;
 using Helpdesk.Mappers;
+using Helpdesk.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;
@@ -11,17 +12,23 @@ namespace Helpdesk.Services;
 public class UserService
 {
 	private readonly AppDbContext _context;
+	private readonly CurrentUserService _currentUserService;
 
-	public UserService(AppDbContext context)
+	public UserService(
+	    AppDbContext context,
+	    CurrentUserService currentUserService)
 	{
-		_context = context;
+	    _context = context;
+	    _currentUserService = currentUserService;
 	}
 
 	public async Task<List<UserResponse>> GetAll()
 	{
+	    var currentUser = await _currentUserService.GetCurrentUser();
+
+	    AuthorizationHelper.EnsureAdmin(currentUser);
+
 	    return await _context.Users
-	    	// .OrderByDescending(u => u.CreatedAt)
-	    	// .Take(10)
 	        .Select(u => new UserResponse
 	        {
 	            Id = u.Id,
@@ -35,60 +42,71 @@ public class UserService
 
 	public async Task<UserResponse> GetById(int id)
 	{
-		var user = await _context.Users
+	    var user = await _context.Users
 	        .FirstOrDefaultAsync(u => u.Id == id);
 
 	    if (user == null)
 	        throw new NotFoundException("User not found.");
+
+	    var currentUser = await _currentUserService.GetCurrentUser();
+
+	    AuthorizationHelper.EnsureOwnerOrAdmin(user.Id, currentUser);
 
 	    return UserMapper.ToUserResponse(user);
 	}
 
 	public async Task<UserResponse> Create(CreateUserRequest request)
 	{
-		var existingUser = await _context.Users
-			.FirstOrDefaultAsync(u => u.Email == request.Email);
+	    var currentUser = await _currentUserService.GetCurrentUser();
 
-		if (existingUser != null)
-			throw new ConflictException("Email already exists");
+	    AuthorizationHelper.EnsureAdmin(currentUser);
 
-		var user = new User
-		{
-			Name = request.Name,
-			Email = request.Email,
-			PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
-		};
+	    var emailExists = await _context.Users
+	        .AnyAsync(u => u.Email == request.Email);
 
-		_context.Users.Add(user);
+	    if (emailExists)
+	        throw new ConflictException("Email already exists.");
 
-		await _context.SaveChangesAsync();
+	    var user = new User
+	    {
+	        Name = request.Name.Trim(),
+	        Email = request.Email.Trim().ToLower(),
+	        PasswordHash = BCrypt.HashPassword(request.Password)
+	    };
 
-		return UserMapper.ToUserResponse(user);
+	    _context.Users.Add(user);
+
+	    await _context.SaveChangesAsync();
+
+	    return UserMapper.ToUserResponse(user);
 	}
 
 	public async Task<UserResponse> Update(int id, UpdateUserRequest request)
 	{
 	    var user = await _context.Users
-	    	.FirstOrDefaultAsync(u => u.Id == id);
+	        .FirstOrDefaultAsync(u => u.Id == id);
 
 	    if (user == null)
-	    	throw new NotFoundException("User not found.");
+	        throw new NotFoundException("User not found.");
 
-	    var existingUser = await _context.Users
-	        .FirstOrDefaultAsync(u =>
-	            u.Email == request.Email &&
-	            u.Id != id);
+	    var currentUser = await _currentUserService.GetCurrentUser();
 
-	    if (existingUser != null)
-	    	throw new ConflictException("Email already exists.");
+	    AuthorizationHelper.EnsureOwnerOrAdmin(user.Id, currentUser);
 
-	    user.Name = request.Name;
-	    user.Email = request.Email;
+	    var emailExists = await _context.Users.AnyAsync(u =>
+	        u.Email == request.Email &&
+	        u.Id != id);
+
+	    if (emailExists)
+	        throw new ConflictException("Email already exists.");
+
+	    user.Name = request.Name.Trim();
+	    user.Email = request.Email.Trim().ToLower();
 	    user.Status = request.Status!.Value;
 
 	    if (!string.IsNullOrWhiteSpace(request.Password))
 	    {
-	        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+	        user.PasswordHash = BCrypt.HashPassword(request.Password);
 	    }
 
 	    await _context.SaveChangesAsync();
@@ -98,16 +116,18 @@ public class UserService
 
 	public async Task Delete(int id)
 	{
-		var user = await _context.Users
-			.FirstOrDefaultAsync(u => u.Id == id);
+	    var currentUser = await _currentUserService.GetCurrentUser();
 
-		if (user == null)
-			throw new NotFoundException("User not found.");
+	    AuthorizationHelper.EnsureAdmin(currentUser);
 
-		user.Status = UserStatus.Inactive;
+	    var user = await _context.Users
+	        .FirstOrDefaultAsync(u => u.Id == id);
 
-		// _context.Users.Remove(user);
+	    if (user == null)
+	        throw new NotFoundException("User not found.");
 
-		await _context.SaveChangesAsync();
+	    user.Status = UserStatus.Inactive;
+
+	    await _context.SaveChangesAsync();
 	}
 }

@@ -3,6 +3,7 @@ using Helpdesk.Dtos.Ticket;
 using Helpdesk.Exceptions;
 using Helpdesk.Mappers;
 using Helpdesk.Models;
+using Helpdesk.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;
