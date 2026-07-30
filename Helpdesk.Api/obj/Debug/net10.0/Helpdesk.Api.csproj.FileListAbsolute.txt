@@ -4,7 +4,9 @@
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/Helpdesk.Api.AssemblyInfoInputs.cache
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/Helpdesk.Api.AssemblyInfo.cs
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/Helpdesk.Api.csproj.CoreCompileInputs.cache
+/home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/Helpdesk.Api.MvcApplicationPartsAssemblyInfo.cs
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/Helpdesk.Api.MvcApplicationPartsAssemblyInfo.cache
+/home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/Helpdesk.Api.sourcelink.json
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/appsettings.Development.json
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/appsettings.json
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Helpdesk.Api.staticwebassets.endpoints.json
@@ -35,11 +37,16 @@
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Microsoft.IdentityModel.Protocols.dll
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Microsoft.IdentityModel.Tokens.dll
+/home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Microsoft.OpenApi.dll
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Microsoft.VisualStudio.SolutionPersistence.dll
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Mono.TextTemplating.dll
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Newtonsoft.Json.dll
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Npgsql.dll
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
+/home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Scalar.AspNetCore.dll
+/home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Swashbuckle.AspNetCore.Swagger.dll
+/home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Swashbuckle.AspNetCore.SwaggerGen.dll
+/home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/Swashbuckle.AspNetCore.SwaggerUI.dll
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/System.CodeDom.dll
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/System.Composition.AttributedModel.dll
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/bin/Debug/net10.0/System.Composition.Convention.dll
@@ -127,4 +134,3 @@
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/Helpdesk.Api.pdb
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/Helpdesk.Api.genruntimeconfig.cache
 /home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/ref/Helpdesk.Api.dll
-/home/tatan/Documents/Helpdesk/Helpdesk.Api/obj/Debug/net10.0/Helpdesk.Api.sourcelink.json

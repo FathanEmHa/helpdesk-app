@@ -1,3 +1,4 @@
+using Scalar.AspNetCore;
 using System.Text;
 using Helpdesk;
 using Helpdesk.Services;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,32 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<ValidationFilter>();
+});
+
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Helpdesk API",
+        Version = "v1"
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Masukkan JWT tanpa kata Bearer."
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
+    });
 });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -52,6 +80,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+
+    app.MapScalarApiReference(options =>
+    {
+        options
+            .WithTitle("Helpdesk API")
+            .WithOpenApiRoutePattern("/swagger/{documentName}/swagger.json");
+    });
+}
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -60,11 +100,10 @@ using (var scope = app.Services.CreateScope())
     await DataSeeder.SeedAdminAsync(db);
 };
 
-app.UseAuthentication();
-
-app.UseAuthorization();
-
 app.UseExceptionMiddleware();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
