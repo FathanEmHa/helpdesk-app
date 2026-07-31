@@ -1,9 +1,9 @@
 using Helpdesk.Data;
 using Helpdesk.Dtos.Ticket;
 using Helpdesk.Exceptions;
+using Helpdesk.Helpers;
 using Helpdesk.Mappers;
 using Helpdesk.Models;
-using Helpdesk.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;
@@ -11,15 +11,40 @@ namespace Helpdesk.Services;
 public class TicketService
 {
     private readonly AppDbContext _context;
+    private readonly CurrentUserService _currentUserService;
 
-    public TicketService(AppDbContext context)
+    public TicketService(
+        AppDbContext context,
+        CurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<List<TicketListResponse>> GetAll()
     {
+        var currentUser = await _currentUserService.GetCurrentUser();
+
+        if (currentUser.Role == UserRole.Admin)
+        {
+            return await _context.Tickets
+                .Where(t => t.DeletedAt == null)
+                .Select(t => new TicketListResponse
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Status = t.Status.ToString(),
+                    Priority = t.Priority.ToString(),
+                    UserId = t.UserId,
+                    UserName = t.User.Name
+                })
+                .ToListAsync();
+        }
+
         return await _context.Tickets
+            .Where(t =>
+                t.UserId == currentUser.Id &&
+                t.DeletedAt == null)
             .Select(t => new TicketListResponse
             {
                 Id = t.Id,
@@ -36,21 +61,25 @@ public class TicketService
     {
         var ticket = await _context.Tickets
             .Include(t => t.User)
-            .FirstOrDefaultAsync(t => t.Id == id);
+            .FirstOrDefaultAsync(t =>
+                t.Id == id &&
+                t.DeletedAt == null);
 
         if (ticket == null)
             throw new NotFoundException("Ticket not found.");
 
+        var currentUser = await _currentUserService.GetCurrentUser();
+
+        AuthorizationHelper.EnsureOwnerOrAdmin(
+            ticket.UserId,
+            currentUser);
+
         return TicketMapper.ToDetailResponse(ticket);
     }
 
-    public async Task<TicketDetailResponse> Create(int userId, CreateTicketRequest request)
+    public async Task<TicketDetailResponse> Create(CreateTicketRequest request)
     {
-        var user = await _context.Users
-        	.FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (user == null)
-            throw new NotFoundException("User not found.");
+        var currentUser = await _currentUserService.GetCurrentUser();
 
         var ticket = new Ticket
         {
@@ -58,8 +87,8 @@ public class TicketService
             Description = request.Description.Trim(),
             Priority = request.Priority!.Value,
             Status = TicketStatus.Open,
-            UserId = userId,
-            User = user
+            UserId = currentUser.Id,
+            User = currentUser
         };
 
         _context.Tickets.Add(ticket);
@@ -69,14 +98,24 @@ public class TicketService
         return TicketMapper.ToDetailResponse(ticket);
     }
 
-    public async Task<TicketDetailResponse> Update(int id, UpdateTicketRequest request)
+    public async Task<TicketDetailResponse> Update(
+        int id,
+        UpdateTicketRequest request)
     {
         var ticket = await _context.Tickets
             .Include(t => t.User)
-            .FirstOrDefaultAsync(t => t.Id == id);
+            .FirstOrDefaultAsync(t =>
+                t.Id == id &&
+                t.DeletedAt == null);
 
         if (ticket == null)
             throw new NotFoundException("Ticket not found.");
+
+        var currentUser = await _currentUserService.GetCurrentUser();
+
+        AuthorizationHelper.EnsureOwnerOrAdmin(
+            ticket.UserId,
+            currentUser);
 
         ticket.Title = request.Title.Trim();
         ticket.Description = request.Description.Trim();
@@ -91,10 +130,18 @@ public class TicketService
     public async Task Delete(int id)
     {
         var ticket = await _context.Tickets
-            .FirstOrDefaultAsync(t => t.Id == id);
+            .FirstOrDefaultAsync(t =>
+                t.Id == id &&
+                t.DeletedAt == null);
 
         if (ticket == null)
             throw new NotFoundException("Ticket not found.");
+
+        var currentUser = await _currentUserService.GetCurrentUser();
+
+        AuthorizationHelper.EnsureOwnerOrAdmin(
+            ticket.UserId,
+            currentUser);
 
         ticket.DeletedAt = DateTime.UtcNow;
 

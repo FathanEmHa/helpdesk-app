@@ -1,133 +1,138 @@
 using BCrypt.Net;
 using Helpdesk.Data;
 using Helpdesk.Dtos.User;
-using Helpdesk.Models;
 using Helpdesk.Exceptions;
 using Helpdesk.Mappers;
-using Helpdesk.Helpers;
+using Helpdesk.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;
 
 public class UserService
 {
-	private readonly AppDbContext _context;
-	private readonly CurrentUserService _currentUserService;
+    private readonly AppDbContext _context;
+    private readonly CurrentUserService _currentUserService;
 
-	public UserService(
-	    AppDbContext context,
-	    CurrentUserService currentUserService)
-	{
-	    _context = context;
-	    _currentUserService = currentUserService;
-	}
+    public UserService(
+        AppDbContext context,
+        CurrentUserService currentUserService)
+    {
+        _context = context;
+        _currentUserService = currentUserService;
+    }
 
-	public async Task<List<UserResponse>> GetAll()
-	{
-	    var currentUser = await _currentUserService.GetCurrentUser();
+    // =========================
+    // Admin
+    // =========================
 
-	    AuthorizationHelper.EnsureAdmin(currentUser);
+    public async Task<List<UserResponse>> GetAll()
+    {
+        return await _context.Users
+            .Select(u => new UserResponse
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                Role = u.Role.ToString(),
+                Status = u.Status.ToString()
+            })
+            .ToListAsync();
+    }
 
-	    return await _context.Users
-	        .Select(u => new UserResponse
-	        {
-	            Id = u.Id,
-	            Name = u.Name,
-	            Email = u.Email,
-	            Role = u.Role.ToString(),
-	            Status = u.Status.ToString()
-	        })
-	        .ToListAsync();
-	}
+    public async Task<UserResponse> GetById(int id)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == id);
 
-	public async Task<UserResponse> GetById(int id)
-	{
-	    var user = await _context.Users
-	        .FirstOrDefaultAsync(u => u.Id == id);
+        if (user == null)
+            throw new NotFoundException("User not found.");
 
-	    if (user == null)
-	        throw new NotFoundException("User not found.");
+        return UserMapper.ToUserResponse(user);
+    }
 
-	    var currentUser = await _currentUserService.GetCurrentUser();
+    public async Task<UserResponse> Create(CreateUserRequest request)
+    {
+        var emailExists = await _context.Users
+            .AnyAsync(u => u.Email == request.Email);
 
-	    AuthorizationHelper.EnsureOwnerOrAdmin(user.Id, currentUser);
+        if (emailExists)
+            throw new ConflictException("Email already exists.");
 
-	    return UserMapper.ToUserResponse(user);
-	}
+        var user = new User
+        {
+            Name = request.Name.Trim(),
+            Email = request.Email.Trim().ToLower(),
+            PasswordHash = BCrypt.HashPassword(request.Password)
+        };
 
-	public async Task<UserResponse> Create(CreateUserRequest request)
-	{
-	    var currentUser = await _currentUserService.GetCurrentUser();
+        _context.Users.Add(user);
 
-	    AuthorizationHelper.EnsureAdmin(currentUser);
+        await _context.SaveChangesAsync();
 
-	    var emailExists = await _context.Users
-	        .AnyAsync(u => u.Email == request.Email);
+        return UserMapper.ToUserResponse(user);
+    }
 
-	    if (emailExists)
-	        throw new ConflictException("Email already exists.");
+    public async Task<UserResponse> Update(int id, UpdateUserRequest request)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == id);
 
-	    var user = new User
-	    {
-	        Name = request.Name.Trim(),
-	        Email = request.Email.Trim().ToLower(),
-	        PasswordHash = BCrypt.HashPassword(request.Password)
-	    };
+        if (user == null)
+            throw new NotFoundException("User not found.");
 
-	    _context.Users.Add(user);
+        user.Role = request.Role!.Value;
+        user.Status = request.Status!.Value;
 
-	    await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
-	    return UserMapper.ToUserResponse(user);
-	}
+        return UserMapper.ToUserResponse(user);
+    }
 
-	public async Task<UserResponse> Update(int id, UpdateUserRequest request)
-	{
-	    var user = await _context.Users
-	        .FirstOrDefaultAsync(u => u.Id == id);
+    public async Task Delete(int id)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == id);
 
-	    if (user == null)
-	        throw new NotFoundException("User not found.");
+        if (user == null)
+            throw new NotFoundException("User not found.");
 
-	    var currentUser = await _currentUserService.GetCurrentUser();
+        user.Status = UserStatus.Inactive;
 
-	    AuthorizationHelper.EnsureOwnerOrAdmin(user.Id, currentUser);
+        await _context.SaveChangesAsync();
+    }
 
-	    var emailExists = await _context.Users.AnyAsync(u =>
-	        u.Email == request.Email &&
-	        u.Id != id);
+    // =========================
+    // Current User
+    // =========================
 
-	    if (emailExists)
-	        throw new ConflictException("Email already exists.");
+    public async Task<UserResponse> GetCurrentProfile()
+    {
+        var currentUser = await _currentUserService.GetCurrentUser();
 
-	    user.Name = request.Name.Trim();
-	    user.Email = request.Email.Trim().ToLower();
-	    user.Status = request.Status!.Value;
+        return UserMapper.ToUserResponse(currentUser);
+    }
 
-	    if (!string.IsNullOrWhiteSpace(request.Password))
-	    {
-	        user.PasswordHash = BCrypt.HashPassword(request.Password);
-	    }
+    public async Task<UserResponse> UpdateProfile(UpdateProfileRequest request)
+    {
+        var currentUser = await _currentUserService.GetCurrentUser();
 
-	    await _context.SaveChangesAsync();
+        var emailExists = await _context.Users.AnyAsync(u =>
+            u.Email == request.Email &&
+            u.Id != currentUser.Id);
 
-	    return UserMapper.ToUserResponse(user);
-	}
+        if (emailExists)
+            throw new ConflictException("Email already exists.");
 
-	public async Task Delete(int id)
-	{
-	    var currentUser = await _currentUserService.GetCurrentUser();
+        currentUser.Name = request.Name.Trim();
+        currentUser.Email = request.Email.Trim().ToLower();
 
-	    AuthorizationHelper.EnsureAdmin(currentUser);
+        if (!string.IsNullOrWhiteSpace(request.Password))
+        {
+            currentUser.PasswordHash = BCrypt.HashPassword(request.Password);
+        }
 
-	    var user = await _context.Users
-	        .FirstOrDefaultAsync(u => u.Id == id);
+        await _context.SaveChangesAsync();
 
-	    if (user == null)
-	        throw new NotFoundException("User not found.");
-
-	    user.Status = UserStatus.Inactive;
-
-	    await _context.SaveChangesAsync();
-	}
+        return UserMapper.ToUserResponse(currentUser);
+    }
 }
