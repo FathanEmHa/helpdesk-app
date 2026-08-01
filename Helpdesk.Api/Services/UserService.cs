@@ -62,7 +62,7 @@ public class UserService
         {
             Name = request.Name.Trim(),
             Email = request.Email.Trim().ToLower(),
-            PasswordHash = BCrypt.HashPassword(request.Password)
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
         };
 
         _context.Users.Add(user);
@@ -107,14 +107,14 @@ public class UserService
 
     public async Task<UserResponse> GetCurrentProfile()
     {
-        var currentUser = await _currentUserService.GetCurrentUser();
+        var currentUser = await _currentUserService.GetAsync();
 
         return UserMapper.ToUserResponse(currentUser);
     }
 
     public async Task<UserResponse> UpdateProfile(UpdateProfileRequest request)
     {
-        var currentUser = await _currentUserService.GetCurrentUser();
+        var currentUser = await _currentUserService.GetAsync();
 
         var emailExists = await _context.Users.AnyAsync(u =>
             u.Email == request.Email &&
@@ -128,7 +128,7 @@ public class UserService
 
         if (!string.IsNullOrWhiteSpace(request.Password))
         {
-            currentUser.PasswordHash = BCrypt.HashPassword(request.Password);
+            currentUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
         }
 
         await _context.SaveChangesAsync();

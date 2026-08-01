@@ -23,9 +23,9 @@ public class TicketService
 
     public async Task<List<TicketListResponse>> GetAll()
     {
-        var currentUser = await _currentUserService.GetCurrentUser();
+        var currentUser = await _currentUserService.GetAsync();
 
-        if (currentUser.Role == UserRole.Admin)
+        if (currentUser.Role == Role.Admin)
         {
             return await _context.Tickets
                 .Where(t => t.DeletedAt == null)
@@ -68,7 +68,7 @@ public class TicketService
         if (ticket == null)
             throw new NotFoundException("Ticket not found.");
 
-        var currentUser = await _currentUserService.GetCurrentUser();
+        var currentUser = await _currentUserService.GetAsync();
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,
@@ -79,7 +79,7 @@ public class TicketService
 
     public async Task<TicketDetailResponse> Create(CreateTicketRequest request)
     {
-        var currentUser = await _currentUserService.GetCurrentUser();
+        var currentUser = await _currentUserService.GetAsync();
 
         var ticket = new Ticket
         {
@@ -111,7 +111,7 @@ public class TicketService
         if (ticket == null)
             throw new NotFoundException("Ticket not found.");
 
-        var currentUser = await _currentUserService.GetCurrentUser();
+        var currentUser = await _currentUserService.GetAsync();
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,
@@ -137,7 +137,7 @@ public class TicketService
         if (ticket == null)
             throw new NotFoundException("Ticket not found.");
 
-        var currentUser = await _currentUserService.GetCurrentUser();
+        var currentUser = await _currentUserService.GetAsync();
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,
