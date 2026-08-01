@@ -61,6 +61,8 @@ public class TicketService
     {
         var ticket = await _context.Tickets
             .Include(t => t.User)
+            .Include(t => t.Comments)
+                .ThenInclude(c => c.User)
             .FirstOrDefaultAsync(t =>
                 t.Id == id &&
                 t.DeletedAt == null);

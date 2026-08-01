@@ -15,7 +15,12 @@ public static class TicketMapper
             Priority = ticket.Priority.ToString(),
             Status = ticket.Status.ToString(),
             UserId = ticket.UserId,
-            UserName = ticket.User.Name
+            UserName = ticket.User.Name,
+            Comments = ticket.Comments
+                .Where(c => c.DeletedAt == null)
+                .OrderBy(c => c.CreatedAt)
+                .Select(CommentMapper.ToCommentResponse)
+                .ToList()
         };
     }
 }

@@ -1,3 +1,5 @@
+using Helpdesk.Dtos.Comment;
+
 namespace Helpdesk.Dtos.Ticket;
 
 public class TicketDetailResponse
@@ -15,4 +17,6 @@ public class TicketDetailResponse
     public int UserId { get; set; }
 
     public string UserName { get; set; } = "";
+
+    public List<CommentResponse> Comments { get; set; } = [];
 }

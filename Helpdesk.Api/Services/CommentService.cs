@@ -85,7 +85,7 @@ public class CommentService
 
         await _context.SaveChangesAsync();
 
-        return CommentMapper.ToResponse(comment);
+        return CommentMapper.ToCommentResponse(comment);
     }
 
     public async Task<CommentResponse> Update(
@@ -112,7 +112,7 @@ public class CommentService
 
         await _context.SaveChangesAsync();
 
-        return CommentMapper.ToResponse(comment);
+        return CommentMapper.ToCommentResponse(comment);
     }
 
     public async Task Delete(int id)

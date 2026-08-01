@@ -31,7 +31,7 @@ public class TicketCommentController : ControllerBase
         var comment = await _commentService.Create(ticketId, request);
 
         return CreatedAtAction(
-            nameof(GetByTicket),
+            nameof(GetByTicketId),
             new { ticketId },
             comment);
     }
