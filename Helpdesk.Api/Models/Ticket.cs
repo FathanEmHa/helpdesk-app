@@ -13,7 +13,10 @@ public class Ticket
     public TicketStatus Status { get; set; } = TicketStatus.Open;
 
     public int UserId { get; set; }
+
     public User User { get; set; } = null!;
+
+    public ICollection<Comment> Comments { get; set; } = [];
 
     public DateTime? DeletedAt { get; set; }
 }

@@ -15,4 +15,8 @@ public class User
     public string PhoneNumber { get; set; } = "";
 
     public UserStatus Status { get; set; } = UserStatus.Active;
+
+    public ICollection<Ticket> Tickets { get; set; } = [];
+
+    public ICollection<Comment> Comments { get; set; } = [];
 }
