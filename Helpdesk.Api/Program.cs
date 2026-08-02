@@ -74,6 +74,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<TicketService>();
+builder.Services.AddScoped<CommentService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(

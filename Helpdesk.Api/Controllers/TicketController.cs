@@ -30,7 +30,7 @@ public class TicketsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(CreateTicketRequest request)
+    public async Task<IActionResult> Create(CreateMyTicketRequest request)
     {
         var ticket = await _ticketService.Create(request);
 
@@ -41,9 +41,9 @@ public class TicketsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, UpdateTicketRequest request)
+    public async Task<IActionResult> Update(int id, UpdateMyTicketRequest request)
     {
-        return Ok(await _ticketService.Update(id, request));
+        return Ok(await _ticketService.UpdateMyTicket(id, request));
     }
 
     [HttpDelete("{id}")]

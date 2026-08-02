@@ -16,6 +16,8 @@ public class User
 
     public UserStatus Status { get; set; } = UserStatus.Active;
 
+    public DateTime? DeletedAt { get; set; }
+
     public ICollection<Ticket> Tickets { get; set; } = [];
 
     public ICollection<Comment> Comments { get; set; } = [];

@@ -21,7 +21,7 @@ public class AppDbContext : DbContext
             .HasConversion<string>();
 
         modelBuilder.Entity<User>()
-            .HasQueryFilter(u => u.Status == UserStatus.Active);
+            .HasQueryFilter(u => u.DeletedAt == null);
 
         modelBuilder.Entity<Ticket>()
             .HasQueryFilter(t => t.DeletedAt == null);

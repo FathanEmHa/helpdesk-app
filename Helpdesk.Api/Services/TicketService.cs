@@ -79,7 +79,7 @@ public class TicketService
         return TicketMapper.ToDetailResponse(ticket);
     }
 
-    public async Task<TicketDetailResponse> Create(CreateTicketRequest request)
+    public async Task<TicketDetailResponse> Create(CreateMyTicketRequest request)
     {
         var currentUser = await _currentUserService.GetAsync();
 
@@ -87,10 +87,12 @@ public class TicketService
         {
             Title = request.Title.Trim(),
             Description = request.Description.Trim(),
-            Priority = request.Priority!.Value,
-            Status = TicketStatus.Open,
+            
             UserId = currentUser.Id,
-            User = currentUser
+            User = currentUser,
+
+            Priority = TicketPriority.Medium,
+            Status = TicketStatus.Open,
         };
 
         _context.Tickets.Add(ticket);
@@ -100,9 +102,9 @@ public class TicketService
         return TicketMapper.ToDetailResponse(ticket);
     }
 
-    public async Task<TicketDetailResponse> Update(
+    public async Task<TicketDetailResponse> UpdateMyTicket(
         int id,
-        UpdateTicketRequest request)
+        UpdateMyTicketRequest request)
     {
         var ticket = await _context.Tickets
             .Include(t => t.User)
@@ -115,12 +117,34 @@ public class TicketService
 
         var currentUser = await _currentUserService.GetAsync();
 
-        AuthorizationHelper.EnsureOwnerOrAdmin(
-            ticket.UserId,
-            currentUser);
+        if (ticket.UserId != currentUser.Id)
+            throw new ForbiddenException("You cannot update user ticket own");
 
         ticket.Title = request.Title.Trim();
         ticket.Description = request.Description.Trim();
+
+        await _context.SaveChangesAsync();
+
+        return TicketMapper.ToDetailResponse(ticket);
+    }
+
+    public async Task<TicketDetailResponse> UpdateTicketAdmin(
+        int id,
+        UpdateTicketAdminRequest request)
+    {
+        var ticket = await _context.Tickets
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t =>
+                t.Id == id &&
+                t.DeletedAt == null);
+
+        if (ticket == null)
+            throw new NotFoundException("Ticket not found.");
+
+        var currentUser = await _currentUserService.GetAsync();
+
+        AuthorizationHelper.EnsureAdmin(currentUser);
+
         ticket.Priority = request.Priority!.Value;
         ticket.Status = request.Status!.Value;
 

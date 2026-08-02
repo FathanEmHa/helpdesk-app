@@ -90,13 +90,18 @@ public class UserService
 
     public async Task Delete(int id)
     {
+        var currentUser = await _currentUserService.GetAsync();
+
+        if (currentUser.Id == id)
+            throw new ForbiddenException("You cannot delete your own account.");
+
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
             throw new NotFoundException("User not found.");
 
-        user.Status = UserStatus.Inactive;
+        user.DeletedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
     }
