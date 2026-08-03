@@ -18,9 +18,9 @@ public class TicketsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] TicketQueryRequest request)
     {
-        return Ok(await _ticketService.GetAll());
+        return Ok(await _ticketService.GetAll(request));
     }
 
     [HttpGet("{id}")]

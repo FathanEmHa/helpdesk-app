@@ -1,5 +1,6 @@
 using Helpdesk.Data;
 using Helpdesk.Dtos.Ticket;
+using Helpdesk.Dtos.Common;
 using Helpdesk.Exceptions;
 using Helpdesk.Helpers;
 using Helpdesk.Mappers;
@@ -21,30 +22,25 @@ public class TicketService
         _currentUserService = currentUserService;
     }
 
-    public async Task<List<TicketListResponse>> GetAll()
+    public async Task<PagedResponse<TicketListResponse>> GetAll(
+        TicketQueryRequest request)
     {
         var currentUser = await _currentUserService.GetAsync();
 
-        if (currentUser.Role == Role.Admin)
+        IQueryable<Ticket> query = _context.Tickets
+            .Where(t => t.DeletedAt == null);
+
+        if (currentUser.Role != Role.Admin)
         {
-            return await _context.Tickets
-                .Where(t => t.DeletedAt == null)
-                .Select(t => new TicketListResponse
-                {
-                    Id = t.Id,
-                    Title = t.Title,
-                    Status = t.Status.ToString(),
-                    Priority = t.Priority.ToString(),
-                    UserId = t.UserId,
-                    UserName = t.User.Name
-                })
-                .ToListAsync();
+            query = query.Where(t => t.UserId == currentUser.Id);
         }
 
-        return await _context.Tickets
-            .Where(t =>
-                t.UserId == currentUser.Id &&
-                t.DeletedAt == null)
+        var totalItems = await query.CountAsync();
+
+        var tickets = await query
+            .OrderByDescending(t => t.Id)
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
             .Select(t => new TicketListResponse
             {
                 Id = t.Id,
@@ -55,6 +51,18 @@ public class TicketService
                 UserName = t.User.Name
             })
             .ToListAsync();
+
+        var totalPages = (int)Math.Ceiling(
+            (double)totalItems / request.PageSize);
+
+        return new PagedResponse<TicketListResponse>
+        {
+            Items = tickets,
+            Page = request.Page,
+            PageSize = request.PageSize,
+            TotalItems = totalItems,
+            TotalPages = totalPages
+        };
     }
 
     public async Task<TicketDetailResponse> GetById(int id)
