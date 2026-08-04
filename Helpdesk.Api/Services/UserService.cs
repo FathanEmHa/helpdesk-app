@@ -1,6 +1,7 @@
 using BCrypt.Net;
 using Helpdesk.Data;
 using Helpdesk.Dtos.User;
+using Helpdesk.Dtos.Common;
 using Helpdesk.Exceptions;
 using Helpdesk.Mappers;
 using Helpdesk.Models;
@@ -21,25 +22,12 @@ public class UserService
         _currentUserService = currentUserService;
     }
 
-    // =========================
-    // Admin
-    // =========================
-
-    public async Task<List<UserResponse>> GetAll()
+    private Task<User> GetCurrentUser()
     {
-        return await _context.Users
-            .Select(u => new UserResponse
-            {
-                Id = u.Id,
-                Name = u.Name,
-                Email = u.Email,
-                Role = u.Role.ToString(),
-                Status = u.Status.ToString()
-            })
-            .ToListAsync();
+        return _currentUserService.GetAsync();
     }
 
-    public async Task<UserResponse> GetById(int id)
+    private async Task<User> GetUserOrThrow(int id)
     {
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Id == id);
@@ -47,16 +35,116 @@ public class UserService
         if (user == null)
             throw new NotFoundException("User not found.");
 
+        return user;
+    }
+
+    private async Task EnsureEmailUnique(string email, int? ignoreUserId = null)
+    {
+        var exists = await _context.Users.AnyAsync(u =>
+            u.Email == email &&
+            (ignoreUserId == null || u.Id != ignoreUserId));
+
+        if (exists)
+            throw new ConflictException("Email already exists.");
+    }
+
+    // =========================
+    // Admin
+    // =========================
+
+    public async Task<PagedResponse<UserResponse>> GetAll(
+        UserQueryRequest request)
+    {
+        IQueryable<User> query = _context.Users;
+
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var keyword = request.Search.Trim();
+
+            query = query.Where(u =>
+                EF.Functions.ILike(u.Name, $"%{keyword}%") ||
+                EF.Functions.ILike(u.Email, $"%{keyword}%"));
+        }
+
+        if (request.Role.HasValue)
+        {
+            query = query.Where(u =>
+                u.Role == request.Role.Value);
+        }
+
+        if (request.Status.HasValue)
+        {
+            query = query.Where(u =>
+                u.Status == request.Status.Value);
+        }
+
+        query = request.SortBy switch
+        {
+            UserSortBy.Name => request.Descending
+                ? query.OrderByDescending(u => u.Name)
+                : query.OrderBy(u => u.Name),
+
+            UserSortBy.Email => request.Descending
+                ? query.OrderByDescending(u => u.Email)
+                : query.OrderBy(u => u.Email),
+
+            UserSortBy.Role => request.Descending
+                ? query.OrderByDescending(u => u.Role)
+                : query.OrderBy(u => u.Role),
+
+            UserSortBy.Status => request.Descending
+                ? query.OrderByDescending(u => u.Status)
+                : query.OrderBy(u => u.Status),
+
+            UserSortBy.CreatedAt => request.Descending
+                ? query.OrderByDescending(u => u.CreatedAt)
+                : query.OrderBy(u => u.CreatedAt),
+
+            _ => request.Descending
+                ? query.OrderByDescending(u => u.CreatedAt)
+                : query.OrderBy(u => u.CreatedAt)
+        };
+
+        var totalItems = await query.CountAsync();
+
+        var users = await query
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .Select(u => new UserResponse
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                Role = u.Role.ToString(),
+                Status = u.Status.ToString(),
+            })
+            .ToListAsync();
+
+        var totalPages = (int)Math.Ceiling(
+            (double)totalItems / request.PageSize);
+
+        return new PagedResponse<UserResponse>
+        {
+            Items = users,
+            Page = request.Page,
+            PageSize = request.PageSize,
+            TotalItems = totalItems,
+            TotalPages = totalPages
+        };
+    }
+
+    public async Task<UserResponse> GetById(int id)
+    {
+        var user = await GetUserOrThrow(id);
+
         return UserMapper.ToUserResponse(user);
     }
 
     public async Task<UserResponse> Create(CreateUserRequest request)
     {
-        var emailExists = await _context.Users
-            .AnyAsync(u => u.Email == request.Email);
+        var email = request.Email.Trim().ToLower();
 
-        if (emailExists)
-            throw new ConflictException("Email already exists.");
+        await EnsureEmailUnique(email);
 
         var user = new User
         {
@@ -74,11 +162,7 @@ public class UserService
 
     public async Task<UserResponse> Update(int id, UpdateUserRequest request)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Id == id);
-
-        if (user == null)
-            throw new NotFoundException("User not found.");
+        var user = await GetUserOrThrow(id);
 
         user.Role = request.Role!.Value;
         user.Status = request.Status!.Value;
@@ -90,16 +174,12 @@ public class UserService
 
     public async Task Delete(int id)
     {
-        var currentUser = await _currentUserService.GetAsync();
+        var currentUser = await GetCurrentUser();
 
         if (currentUser.Id == id)
             throw new ForbiddenException("You cannot delete your own account.");
 
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Id == id);
-
-        if (user == null)
-            throw new NotFoundException("User not found.");
+        var user = await GetUserOrThrow(id);
 
         user.DeletedAt = DateTime.UtcNow;
 
@@ -112,24 +192,23 @@ public class UserService
 
     public async Task<UserResponse> GetCurrentProfile()
     {
-        var currentUser = await _currentUserService.GetAsync();
+        var currentUser = await GetCurrentUser();
 
         return UserMapper.ToUserResponse(currentUser);
     }
 
     public async Task<UserResponse> UpdateProfile(UpdateProfileRequest request)
     {
-        var currentUser = await _currentUserService.GetAsync();
+        var currentUser = await GetCurrentUser();
 
-        var emailExists = await _context.Users.AnyAsync(u =>
-            u.Email == request.Email &&
-            u.Id != currentUser.Id);
+        var email = request.Email.Trim().ToLower();
 
-        if (emailExists)
-            throw new ConflictException("Email already exists.");
+        await EnsureEmailUnique(
+            email,
+            currentUser.Id);
 
         currentUser.Name = request.Name.Trim();
-        currentUser.Email = request.Email.Trim().ToLower();
+        currentUser.Email = email;
 
         if (!string.IsNullOrWhiteSpace(request.Password))
         {

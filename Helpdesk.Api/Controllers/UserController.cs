@@ -22,9 +22,9 @@ public class UsersController : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] UserQueryRequest request)
     {
-        return Ok(await _userService.GetAll());
+        return Ok(await _userService.GetAll(request));
     }
 
     [Authorize(Roles = "Admin")]
