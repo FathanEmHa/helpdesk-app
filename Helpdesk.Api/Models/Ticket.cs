@@ -18,5 +18,7 @@ public class Ticket
 
     public ICollection<Comment> Comments { get; set; } = [];
 
+    public DateTime CreatedAt {  get; set; }
+
     public DateTime? DeletedAt { get; set; }
 }

@@ -35,6 +35,27 @@ public class TicketService
             query = query.Where(t => t.UserId == currentUser.Id);
         }
 
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var keyword = request.Search.Trim();
+
+            query = query.Where(t =>
+                EF.Functions.ILike(t.Title, $"%{keyword}%") ||
+                EF.Functions.ILike(t.Description, $"%{keyword}%"));
+        }
+
+        if (request.Status.HasValue)
+        {
+            query = query.Where(t =>
+                t.Status == request.Status.Value);
+        }
+
+        if (request.Priority.HasValue)
+        {
+            query = query.Where(t =>
+                t.Priority == request.Priority.Value);
+        }
+
         var totalItems = await query.CountAsync();
 
         var tickets = await query
@@ -101,6 +122,8 @@ public class TicketService
 
             Priority = TicketPriority.Medium,
             Status = TicketStatus.Open,
+
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.Tickets.Add(ticket);

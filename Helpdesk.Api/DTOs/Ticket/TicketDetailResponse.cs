@@ -18,5 +18,7 @@ public class TicketDetailResponse
 
     public string UserName { get; set; } = "";
 
+    public DateTime CreatedAt { get; set; }
+
     public List<CommentResponse> Comments { get; set; } = [];
 }
