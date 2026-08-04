@@ -22,13 +22,44 @@ public class TicketService
         _currentUserService = currentUserService;
     }
 
+    private Task<User> GetCurrentUser()
+    {
+        return _currentUserService.GetAsync();
+    }
+
+    private async Task<Ticket> GetTicketOrThrow(
+        int id,
+        bool includeUser = false,
+        bool includeComments = false)
+    {
+        IQueryable<Ticket> query = _context.Tickets.AsQueryable();
+
+        if (includeUser)
+        {
+            query = query.Include(t => t.User);
+        }
+
+        if (includeComments)
+        {
+            query = query
+                .Include(t => t.Comments)
+                .ThenInclude(c => c.User);
+        }
+
+        var ticket = await query.FirstOrDefaultAsync(t => t.Id == id);
+
+        if (ticket == null)
+            throw new NotFoundException("Ticket not found.");
+
+        return ticket;
+    }
+
     public async Task<PagedResponse<TicketListResponse>> GetAll(
         TicketQueryRequest request)
     {
-        var currentUser = await _currentUserService.GetAsync();
+        var currentUser = await GetCurrentUser();
 
-        IQueryable<Ticket> query = _context.Tickets
-            .Where(t => t.DeletedAt == null);
+        IQueryable<Ticket> query = _context.Tickets;
 
         if (currentUser.Role != Role.Admin)
         {
@@ -56,10 +87,32 @@ public class TicketService
                 t.Priority == request.Priority.Value);
         }
 
+        query = request.SortBy switch
+        {
+            TicketSortBy.Title => request.Descending
+                ? query.OrderByDescending(t => t.Title)
+                : query.OrderBy(t => t.Title),
+
+            TicketSortBy.Priority => request.Descending
+                ? query.OrderByDescending(t => t.Priority)
+                : query.OrderBy(t => t.Priority),
+
+            TicketSortBy.Status => request.Descending
+                ? query.OrderByDescending(t => t.Status)
+                : query.OrderBy(t => t.Status),
+
+            TicketSortBy.CreatedAt => request.Descending
+                ? query.OrderByDescending(t => t.CreatedAt)
+                : query.OrderBy(t => t.CreatedAt),
+
+            _ => request.Descending
+                ? query.OrderByDescending(t => t.CreatedAt)
+                : query.OrderBy(t => t.CreatedAt)
+        };
+
         var totalItems = await query.CountAsync();
 
         var tickets = await query
-            .OrderByDescending(t => t.Id)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(t => new TicketListResponse
@@ -88,18 +141,12 @@ public class TicketService
 
     public async Task<TicketDetailResponse> GetById(int id)
     {
-        var ticket = await _context.Tickets
-            .Include(t => t.User)
-            .Include(t => t.Comments)
-                .ThenInclude(c => c.User)
-            .FirstOrDefaultAsync(t =>
-                t.Id == id &&
-                t.DeletedAt == null);
+        var ticket = await GetTicketOrThrow(
+            id,
+            includeUser: true,
+            includeComments: true);
 
-        if (ticket == null)
-            throw new NotFoundException("Ticket not found.");
-
-        var currentUser = await _currentUserService.GetAsync();
+        var currentUser = await GetCurrentUser();
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,
@@ -110,7 +157,7 @@ public class TicketService
 
     public async Task<TicketDetailResponse> Create(CreateMyTicketRequest request)
     {
-        var currentUser = await _currentUserService.GetAsync();
+        var currentUser = await GetCurrentUser();
 
         var ticket = new Ticket
         {
@@ -122,8 +169,6 @@ public class TicketService
 
             Priority = TicketPriority.Medium,
             Status = TicketStatus.Open,
-
-            CreatedAt = DateTime.UtcNow
         };
 
         _context.Tickets.Add(ticket);
@@ -137,22 +182,19 @@ public class TicketService
         int id,
         UpdateMyTicketRequest request)
     {
-        var ticket = await _context.Tickets
-            .Include(t => t.User)
-            .FirstOrDefaultAsync(t =>
-                t.Id == id &&
-                t.DeletedAt == null);
+        var ticket = await GetTicketOrThrow(
+            id,
+            includeUser: true);
 
-        if (ticket == null)
-            throw new NotFoundException("Ticket not found.");
+        var currentUser = await GetCurrentUser();
 
-        var currentUser = await _currentUserService.GetAsync();
-
-        if (ticket.UserId != currentUser.Id)
-            throw new ForbiddenException("You cannot update user ticket own");
+        AuthorizationHelper.EnsureOwnerOrAdmin(
+            ticket.UserId,
+            currentUser);
 
         ticket.Title = request.Title.Trim();
         ticket.Description = request.Description.Trim();
+        ticket.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
@@ -163,21 +205,17 @@ public class TicketService
         int id,
         UpdateTicketAdminRequest request)
     {
-        var ticket = await _context.Tickets
-            .Include(t => t.User)
-            .FirstOrDefaultAsync(t =>
-                t.Id == id &&
-                t.DeletedAt == null);
+        var ticket = await GetTicketOrThrow(
+            id,
+            includeUser: true);
 
-        if (ticket == null)
-            throw new NotFoundException("Ticket not found.");
-
-        var currentUser = await _currentUserService.GetAsync();
+        var currentUser = await GetCurrentUser();
 
         AuthorizationHelper.EnsureAdmin(currentUser);
 
         ticket.Priority = request.Priority!.Value;
         ticket.Status = request.Status!.Value;
+        ticket.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
@@ -186,15 +224,9 @@ public class TicketService
 
     public async Task Delete(int id)
     {
-        var ticket = await _context.Tickets
-            .FirstOrDefaultAsync(t =>
-                t.Id == id &&
-                t.DeletedAt == null);
+        var ticket = await GetTicketOrThrow(id);
 
-        if (ticket == null)
-            throw new NotFoundException("Ticket not found.");
-
-        var currentUser = await _currentUserService.GetAsync();
+        var currentUser = await GetCurrentUser();
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,

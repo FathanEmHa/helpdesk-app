@@ -13,7 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<Comment> Comments => Set<Comment>();
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>()
@@ -25,6 +25,9 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Ticket>()
             .HasQueryFilter(t => t.DeletedAt == null);
+
+        modelBuilder.Entity<Comment>()
+            .HasQueryFilter(c => c.DeletedAt == null);
 
         base.OnModelCreating(modelBuilder);
     }

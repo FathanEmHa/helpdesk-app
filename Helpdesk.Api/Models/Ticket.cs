@@ -1,3 +1,5 @@
+using Helpdesk.Models.Interfaces;
+
 namespace Helpdesk.Models;
 
 public class Ticket
@@ -18,7 +20,9 @@ public class Ticket
 
     public ICollection<Comment> Comments { get; set; } = [];
 
-    public DateTime CreatedAt {  get; set; }
+    public DateTime CreatedAt {  get; set; } = DateTime.UtcNow;
+
+    public DateTime? UpdatedAt { get; set; }
 
     public DateTime? DeletedAt { get; set; }
 }

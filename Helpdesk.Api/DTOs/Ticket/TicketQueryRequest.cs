@@ -10,4 +10,8 @@ public class TicketQueryRequest : PaginationRequest
 	public TicketStatus? Status { get; set; }
 
     public TicketPriority? Priority { get; set; }
+
+    public TicketSortBy? SortBy { get; set; }
+
+    public bool Descending { get; set; } = true;
 }
