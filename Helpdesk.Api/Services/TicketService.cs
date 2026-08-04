@@ -26,24 +26,7 @@ public class TicketService
     {
         return _currentUserService.GetAsync();
     }
-
-    private void UpdateAuditFields()
-    {
-        var utcNow = DateTime.UtcNow;
-
-        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
-        {
-            if (entry.State == EntityState.Added)
-            {
-                entry.Entity.CreatedAt = utcNow;
-            }
-            else if (entry.State == EntityState.Modified)
-            {
-                entry.Entity.UpdatedAt = utcNow;
-            }
-        }
-    }
-
+    
     private async Task<Ticket> GetTicketOrThrow(
         int id,
         bool includeUser = false,
@@ -246,6 +229,8 @@ public class TicketService
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,
             currentUser);
+
+        ticket.DeletedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
     }

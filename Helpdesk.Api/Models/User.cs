@@ -2,7 +2,7 @@ using Helpdesk.Models.Base;
 
 namespace Helpdesk.Models;
 
-public class User : BaseEntity
+public class User : SoftDeleteEntity
 {
     public string Name { get; set; } = "";
 

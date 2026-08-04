@@ -1,4 +1,5 @@
 using Helpdesk.Models;
+using Helpdesk.Models.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Data;
@@ -20,6 +21,23 @@ public class AppDbContext : DbContext
         UpdateAuditFields();
 
         return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void UpdateAuditFields()
+    {
+        var utcNow = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAt = utcNow;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdatedAt = utcNow;
+            }
+        }
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
