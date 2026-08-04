@@ -1,11 +1,9 @@
-using Helpdesk.Models.Interfaces;
+using Helpdesk.Models.Base;
 
 namespace Helpdesk.Models;
 
-public class Ticket
+public class Ticket : SoftDeleteEntity
 {
-    public int Id { get; set; }
-
     public string Title { get; set; } = "";
 
     public string Description { get; set; } = "";
@@ -19,10 +17,4 @@ public class Ticket
     public User User { get; set; } = null!;
 
     public ICollection<Comment> Comments { get; set; } = [];
-
-    public DateTime CreatedAt {  get; set; } = DateTime.UtcNow;
-
-    public DateTime? UpdatedAt { get; set; }
-
-    public DateTime? DeletedAt { get; set; }
 }
