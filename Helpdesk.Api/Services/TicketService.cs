@@ -1,3 +1,4 @@
+using Helpdesk.Services.Base;
 using Helpdesk.Data;
 using Helpdesk.Dtos.Ticket;
 using Helpdesk.Dtos.Common;
@@ -5,26 +6,18 @@ using Helpdesk.Exceptions;
 using Helpdesk.Helpers;
 using Helpdesk.Mappers;
 using Helpdesk.Models;
+using Helpdesk.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;
 
-public class TicketService
+public class TicketService : BaseService
 {
-    private readonly AppDbContext _context;
-    private readonly CurrentUserService _currentUserService;
-
     public TicketService(
         AppDbContext context,
         CurrentUserService currentUserService)
+        : base(context, currentUserService)
     {
-        _context = context;
-        _currentUserService = currentUserService;
-    }
-
-    private Task<User> GetCurrentUser()
-    {
-        return _currentUserService.GetAsync();
     }
     
     private async Task<Ticket> GetTicketOrThrow(
@@ -32,7 +25,7 @@ public class TicketService
         bool includeUser = false,
         bool includeComments = false)
     {
-        IQueryable<Ticket> query = _context.Tickets.AsQueryable();
+        IQueryable<Ticket> query = Context.Tickets.AsQueryable();
 
         if (includeUser)
         {
@@ -59,7 +52,7 @@ public class TicketService
     {
         var currentUser = await GetCurrentUser();
 
-        IQueryable<Ticket> query = _context.Tickets;
+        IQueryable<Ticket> query = Context.Tickets;
 
         if (currentUser.Role != Role.Admin)
         {
@@ -113,8 +106,9 @@ public class TicketService
         var totalItems = await query.CountAsync();
 
         var tickets = await query
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
+            .ApplyPagination(
+                request.Page,
+                request.PageSize)
             .Select(t => new TicketListResponse
             {
                 Id = t.Id,
@@ -171,9 +165,9 @@ public class TicketService
             Status = TicketStatus.Open,
         };
 
-        _context.Tickets.Add(ticket);
+        Context.Tickets.Add(ticket);
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         return TicketMapper.ToDetailResponse(ticket);
     }
@@ -195,7 +189,7 @@ public class TicketService
         ticket.Title = request.Title.Trim();
         ticket.Description = request.Description.Trim();
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         return TicketMapper.ToDetailResponse(ticket);
     }
@@ -215,7 +209,7 @@ public class TicketService
         ticket.Priority = request.Priority!.Value;
         ticket.Status = request.Status!.Value;
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         return TicketMapper.ToDetailResponse(ticket);
     }
@@ -232,6 +226,6 @@ public class TicketService
 
         ticket.DeletedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
     }
 }

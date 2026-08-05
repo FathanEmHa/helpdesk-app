@@ -1,35 +1,28 @@
-using BCrypt.Net;
+using Helpdesk.Services.Base;
 using Helpdesk.Data;
+using Helpdesk.Extensions;
 using Helpdesk.Dtos.User;
 using Helpdesk.Dtos.Common;
 using Helpdesk.Exceptions;
 using Helpdesk.Mappers;
 using Helpdesk.Models;
+using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;
 
-public class UserService
+public class UserService : BaseService
 {
-    private readonly AppDbContext _context;
-    private readonly CurrentUserService _currentUserService;
-
     public UserService(
         AppDbContext context,
         CurrentUserService currentUserService)
+        : base(context, currentUserService)
     {
-        _context = context;
-        _currentUserService = currentUserService;
-    }
-
-    private Task<User> GetCurrentUser()
-    {
-        return _currentUserService.GetAsync();
     }
 
     private async Task<User> GetUserOrThrow(int id)
     {
-        var user = await _context.Users
+        var user = await Context.Users
             .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
@@ -40,7 +33,7 @@ public class UserService
 
     private async Task EnsureEmailUnique(string email, int? ignoreUserId = null)
     {
-        var exists = await _context.Users.AnyAsync(u =>
+        var exists = await Context.Users.AnyAsync(u =>
             u.Email == email &&
             (ignoreUserId == null || u.Id != ignoreUserId));
 
@@ -55,7 +48,7 @@ public class UserService
     public async Task<PagedResponse<UserResponse>> GetAll(
         UserQueryRequest request)
     {
-        IQueryable<User> query = _context.Users;
+        IQueryable<User> query = Context.Users;
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
@@ -108,8 +101,9 @@ public class UserService
         var totalItems = await query.CountAsync();
 
         var users = await query
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
+            .ApplyPagination(
+                request.Page,
+                request.PageSize)
             .Select(u => new UserResponse
             {
                 Id = u.Id,
@@ -153,9 +147,9 @@ public class UserService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
         };
 
-        _context.Users.Add(user);
+        Context.Users.Add(user);
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         return UserMapper.ToUserResponse(user);
     }
@@ -167,7 +161,7 @@ public class UserService
         user.Role = request.Role!.Value;
         user.Status = request.Status!.Value;
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         return UserMapper.ToUserResponse(user);
     }
@@ -183,7 +177,7 @@ public class UserService
 
         user.DeletedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
     }
 
     // =========================
@@ -215,7 +209,7 @@ public class UserService
             currentUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
         }
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         return UserMapper.ToUserResponse(currentUser);
     }

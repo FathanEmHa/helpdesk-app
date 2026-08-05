@@ -1,46 +1,66 @@
 using Helpdesk.Data;
-using Helpdesk.Dtos.Comment;
 using Helpdesk.Exceptions;
 using Helpdesk.Helpers;
 using Helpdesk.Mappers;
 using Helpdesk.Models;
+using Helpdesk.Services.Base;
+using Helpdesk.Dtos.Comment;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;
 
-public class CommentService
+public class CommentService : BaseService
 {
-    private readonly AppDbContext _context;
-    private readonly CurrentUserService _currentUserService;
-
     public CommentService(
         AppDbContext context,
         CurrentUserService currentUserService)
+        : base(context, currentUserService)
     {
-        _context = context;
-        _currentUserService = currentUserService;
     }
-
-    public async Task<List<CommentResponse>> GetByTicketId(int ticketId)
+    
+    private async Task<Ticket> GetTicketOrThrow(int id)
     {
-        var ticket = await _context.Tickets
-            .FirstOrDefaultAsync(t =>
-                t.Id == ticketId &&
-                t.DeletedAt == null);
+        var ticket = await Context.Tickets
+            .FirstOrDefaultAsync(t => t.Id == id);
 
         if (ticket == null)
             throw new NotFoundException("Ticket not found.");
 
-        var currentUser = await _currentUserService.GetAsync();
+        return ticket;
+    }
+
+    private async Task<Comment> GetCommentOrThrow(
+        int id,
+        bool includeUser = false)
+    {
+        IQueryable<Comment> query = Context.Comments.AsQueryable();
+
+        if (includeUser)
+        {
+            query = query.Include(c => c.User);
+        }
+
+        var comment = await query
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (comment == null)
+            throw new NotFoundException("Comment not found.");
+
+        return comment;
+    }
+
+    public async Task<List<CommentResponse>> GetByTicketId(int ticketId)
+    {
+        var ticket = await GetTicketOrThrow(ticketId);
+
+        var currentUser = await GetCurrentUser();
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,
             currentUser);
 
-        return await _context.Comments
-            .Where(c =>
-                c.TicketId == ticketId &&
-                c.DeletedAt == null)
+        return await Context.Comments
+            .Where(c => c.TicketId == ticketId)
             .OrderBy(c => c.CreatedAt)
             .Select(c => new CommentResponse
             {
@@ -59,15 +79,9 @@ public class CommentService
         int ticketId,
         CreateCommentRequest request)
     {
-        var ticket = await _context.Tickets
-            .FirstOrDefaultAsync(t =>
-                t.Id == ticketId &&
-                t.DeletedAt == null);
+        var ticket = await GetTicketOrThrow(ticketId);
 
-        if (ticket == null)
-            throw new NotFoundException("Ticket not found.");
-
-        var currentUser = await _currentUserService.GetAsync();
+        var currentUser = await GetCurrentUser();
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,
@@ -81,9 +95,9 @@ public class CommentService
             User = currentUser
         };
 
-        _context.Comments.Add(comment);
+        Context.Comments.Add(comment);
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         return CommentMapper.ToCommentResponse(comment);
     }
@@ -92,40 +106,28 @@ public class CommentService
         int id,
         UpdateCommentRequest request)
     {
-        var comment = await _context.Comments
-            .Include(c => c.User)
-            .FirstOrDefaultAsync(c =>
-                c.Id == id &&
-                c.DeletedAt == null);
+        var comment = await GetCommentOrThrow(
+            id,
+            includeUser: true);
 
-        if (comment == null)
-            throw new NotFoundException("Comment not found.");
-
-        var currentUser = await _currentUserService.GetAsync();
+        var currentUser = await GetCurrentUser();
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             comment.UserId,
             currentUser);
 
         comment.Content = request.Content.Trim();
-        comment.UpdatedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         return CommentMapper.ToCommentResponse(comment);
     }
 
     public async Task Delete(int id)
     {
-        var comment = await _context.Comments
-            .FirstOrDefaultAsync(c =>
-                c.Id == id &&
-                c.DeletedAt == null);
+        var comment = await GetCommentOrThrow(id);
 
-        if (comment == null)
-            throw new NotFoundException("Comment not found.");
-
-        var currentUser = await _currentUserService.GetAsync();
+        var currentUser = await GetCurrentUser();
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             comment.UserId,
@@ -133,6 +135,6 @@ public class CommentService
 
         comment.DeletedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
     }
 }
