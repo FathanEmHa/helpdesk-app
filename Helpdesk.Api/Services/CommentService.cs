@@ -116,6 +116,10 @@ public class CommentService : BaseService
             comment.UserId,
             currentUser);
 
+        Context.Entry(comment)
+            .Property(c => c.Version)
+            .OriginalValue = request.Version;
+
         comment.Content = request.Content.Trim();
 
         await Context.SaveChangesAsync();

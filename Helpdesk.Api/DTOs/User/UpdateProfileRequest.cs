@@ -13,4 +13,6 @@ public class UpdateProfileRequest
 
     [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
     public string? Password { get; set; }
+
+    public uint Version { get; set; }
 }

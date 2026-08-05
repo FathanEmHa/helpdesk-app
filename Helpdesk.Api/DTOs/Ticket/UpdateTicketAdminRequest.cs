@@ -10,4 +10,6 @@ public class UpdateTicketAdminRequest
 
     [Required(ErrorMessage = "Status is required.")]
     public TicketStatus? Status { get; set; }
+
+    public uint Version { get; set; }
 }

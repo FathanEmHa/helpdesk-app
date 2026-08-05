@@ -158,6 +158,10 @@ public class UserService : BaseService
     {
         var user = await GetUserOrThrow(id);
 
+        Context.Entry(user)
+            .Property(u => u.Version)
+            .OriginalValue = request.Version;
+
         user.Role = request.Role!.Value;
         user.Status = request.Status!.Value;
 
@@ -193,6 +197,10 @@ public class UserService : BaseService
     public async Task<UserResponse> UpdateProfile(UpdateProfileRequest request)
     {
         var currentUser = await GetCurrentUser();
+
+        Context.Entry(currentUser)
+            .Property(u => u.Version)
+            .OriginalValue = request.Version;
 
         var email = request.Email.Trim().ToLower();
 

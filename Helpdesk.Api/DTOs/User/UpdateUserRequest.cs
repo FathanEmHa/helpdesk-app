@@ -10,4 +10,6 @@ public class UpdateUserRequest
 
     [Required(ErrorMessage = "Role is required.")]
     public Role? Role { get; set; }
+
+    public uint Version { get; set; }
 }

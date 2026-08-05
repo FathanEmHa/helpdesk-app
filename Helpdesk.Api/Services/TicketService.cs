@@ -183,6 +183,10 @@ public class TicketService : BaseService
             ticket.UserId,
             currentUser);
 
+        Context.Entry(ticket)
+            .Property(t => t.Version)
+            .OriginalValue = request.Version;
+
         ticket.Title = request.Title.Trim();
         ticket.Description = request.Description.Trim();
 
@@ -202,6 +206,10 @@ public class TicketService : BaseService
         var currentUser = await GetCurrentUser();
 
         AuthorizationHelper.EnsureAdmin(currentUser);
+
+        Context.Entry(ticket)
+            .Property(t => t.Version)
+            .OriginalValue = request.Version;
 
         ticket.Priority = request.Priority!.Value;
         ticket.Status = request.Status!.Value;

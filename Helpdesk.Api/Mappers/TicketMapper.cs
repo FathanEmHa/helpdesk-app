@@ -18,6 +18,7 @@ public static class TicketMapper
             UserName = ticket.User.Name,
             CreatedAt = ticket.CreatedAt,
             UpdatedAt = ticket.UpdatedAt,
+            Version = ticket.Version,
             Comments = ticket.Comments
                 .Where(c => c.DeletedAt == null)
                 .OrderBy(c => c.CreatedAt)

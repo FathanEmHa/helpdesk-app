@@ -59,20 +59,30 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+
         modelBuilder.Entity<User>()
             .Property(u => u.Role)
             .HasConversion<string>();
 
         modelBuilder.Entity<User>()
-            .UseXminAsConcurrencyToken()
+            .Property(u => u.Version)
+            .IsRowVersion();
+
+        modelBuilder.Entity<Ticket>()
+            .Property(t => t.Version)
+            .IsRowVersion();
+
+        modelBuilder.Entity<Comment>()
+            .Property(c => c.Version)
+            .IsRowVersion();
+
+        modelBuilder.Entity<User>()
             .HasQueryFilter(u => u.DeletedAt == null);
 
         modelBuilder.Entity<Ticket>()
-            .UseXminAsConcurrencyToken()
             .HasQueryFilter(t => t.DeletedAt == null);
 
         modelBuilder.Entity<Comment>()
-            .UseXminAsConcurrencyToken()
             .HasQueryFilter(c => c.DeletedAt == null);
 
         base.OnModelCreating(modelBuilder);

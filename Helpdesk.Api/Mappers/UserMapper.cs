@@ -15,7 +15,8 @@ public static class UserMapper
             Role = user.Role.ToString(),
             Status = user.Status.ToString(),
             CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt
+            UpdatedAt = user.UpdatedAt,
+            Version = user.Version
         };
     }
 }

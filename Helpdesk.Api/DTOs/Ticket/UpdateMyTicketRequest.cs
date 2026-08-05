@@ -12,4 +12,6 @@ public class UpdateMyTicketRequest
     [Required(ErrorMessage = "Description is required.")]
     [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters.")]
     public string Description { get; set; } = "";
+
+    public uint Version { get; set; }
 }
