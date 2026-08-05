@@ -1,38 +1,29 @@
-using System.Security.Claims;
 using Helpdesk.Data;
-using Helpdesk.Exceptions;
 using Helpdesk.Models;
 
 namespace Helpdesk.Services;
 
 public class CurrentUserService
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ICurrentUserAccessor _currentUserAccessor;
     private readonly AppDbContext _context;
 
     public CurrentUserService(
-        IHttpContextAccessor httpContextAccessor,
+        ICurrentUserAccessor currentUserAccessor,
         AppDbContext context)
     {
-        _httpContextAccessor = httpContextAccessor;
+        _currentUserAccessor = currentUserAccessor;
         _context = context;
     }
 
+    public int? UserId => _currentUserAccessor.UserId;
+
     public async Task<User> GetAsync()
     {
-        var principal = _httpContextAccessor.HttpContext?.User;
-
-        if (principal == null)
+        if (UserId == null)
             throw new UnauthorizedAccessException();
 
-        var idClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
-
-        if (idClaim == null)
-            throw new UnauthorizedAccessException();
-
-        var userId = int.Parse(idClaim.Value);
-
-        var user = await _context.Users.FindAsync(userId);
+        var user = await _context.Users.FindAsync(UserId.Value);
 
         if (user == null)
             throw new UnauthorizedAccessException();

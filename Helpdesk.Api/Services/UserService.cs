@@ -168,14 +168,13 @@ public class UserService : BaseService
 
     public async Task Delete(int id)
     {
-        var currentUser = await GetCurrentUser();
-
-        if (currentUser.Id == id)
+        if (CurrentUserId == id)
             throw new ForbiddenException("You cannot delete your own account.");
 
         var user = await GetUserOrThrow(id);
 
         user.DeletedAt = DateTime.UtcNow;
+        user.DeletedBy = CurrentUserId;
 
         await Context.SaveChangesAsync();
     }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Helpdesk.Exceptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Middleware;
 
@@ -37,6 +38,16 @@ public class ExceptionMiddleware
             {
                 message = ex.Message
             }));
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.ContentType = "application/json";
+
+            await context.Response.WriteAsJsonAsync(new
+            {
+                message = "The resource was modified by another user. Please refresh and try again."
+            });
         }
         catch (Exception)
         {

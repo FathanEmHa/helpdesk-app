@@ -13,7 +13,9 @@ public static class UserMapper
             Name = user.Name,
             Email = user.Email,
             Role = user.Role.ToString(),
-            Status = user.Status.ToString()
+            Status = user.Status.ToString(),
+            CreatedAt = user.CreatedAt,
+            UpdatedAt = user.UpdatedAt
         };
     }
 }

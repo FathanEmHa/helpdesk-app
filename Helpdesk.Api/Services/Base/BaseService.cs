@@ -8,6 +8,9 @@ public abstract class BaseService
     protected readonly AppDbContext Context;
     protected readonly CurrentUserService CurrentUserService;
 
+    protected int? CurrentUserId =>
+        CurrentUserService.UserId;
+
     protected BaseService(
         AppDbContext context,
         CurrentUserService currentUserService)

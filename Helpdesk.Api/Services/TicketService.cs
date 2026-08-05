@@ -151,15 +151,12 @@ public class TicketService : BaseService
 
     public async Task<TicketDetailResponse> Create(CreateMyTicketRequest request)
     {
-        var currentUser = await GetCurrentUser();
-
         var ticket = new Ticket
         {
             Title = request.Title.Trim(),
             Description = request.Description.Trim(),
-            
-            UserId = currentUser.Id,
-            User = currentUser,
+
+            UserId = CurrentUserId!.Value,
 
             Priority = TicketPriority.Medium,
             Status = TicketStatus.Open,
@@ -169,7 +166,7 @@ public class TicketService : BaseService
 
         await Context.SaveChangesAsync();
 
-        return TicketMapper.ToDetailResponse(ticket);
+        return await GetById(ticket.Id);
     }
 
     public async Task<TicketDetailResponse> UpdateMyTicket(
@@ -225,6 +222,7 @@ public class TicketService : BaseService
             currentUser);
 
         ticket.DeletedAt = DateTime.UtcNow;
+        ticket.DeletedBy = CurrentUserId;
 
         await Context.SaveChangesAsync();
     }

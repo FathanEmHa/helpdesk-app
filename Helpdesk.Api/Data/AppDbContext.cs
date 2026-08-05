@@ -1,4 +1,5 @@
 using Helpdesk.Models;
+using Helpdesk.Services;
 using Helpdesk.Models.Base;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,9 +7,14 @@ namespace Helpdesk.Data;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
+    private readonly ICurrentUserAccessor _currentUser;
+
+    public AppDbContext(
+        DbContextOptions<AppDbContext> options,
+        ICurrentUserAccessor currentUser)
         : base(options)
     {
+        _currentUser = currentUser;
     }
 
     public DbSet<User> Users => Set<User>();
@@ -29,13 +35,24 @@ public class AppDbContext : DbContext
 
         foreach (var entry in ChangeTracker.Entries<BaseEntity>())
         {
-            if (entry.State == EntityState.Added)
+            switch (entry.State)
             {
-                entry.Entity.CreatedAt = utcNow;
-            }
-            else if (entry.State == EntityState.Modified)
-            {
-                entry.Entity.UpdatedAt = utcNow;
+                case EntityState.Added:
+
+                    entry.Entity.CreatedAt = utcNow;
+                    entry.Entity.CreatedBy = _currentUser.UserId;
+
+                    break;
+
+                case EntityState.Modified:
+
+                    entry.Property(e => e.CreatedAt).IsModified = false;
+                    entry.Property(e => e.CreatedBy).IsModified = false;
+
+                    entry.Entity.UpdatedAt = utcNow;
+                    entry.Entity.UpdatedBy = _currentUser.UserId;
+
+                    break;
             }
         }
     }
@@ -47,12 +64,15 @@ public class AppDbContext : DbContext
             .HasConversion<string>();
 
         modelBuilder.Entity<User>()
+            .UseXminAsConcurrencyToken()
             .HasQueryFilter(u => u.DeletedAt == null);
 
         modelBuilder.Entity<Ticket>()
+            .UseXminAsConcurrencyToken()
             .HasQueryFilter(t => t.DeletedAt == null);
 
         modelBuilder.Entity<Comment>()
+            .UseXminAsConcurrencyToken()
             .HasQueryFilter(c => c.DeletedAt == null);
 
         base.OnModelCreating(modelBuilder);

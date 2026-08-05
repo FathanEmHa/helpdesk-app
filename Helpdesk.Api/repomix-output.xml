@@ -1,0 +1,4104 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+The content has been processed where line numbers have been added.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Line numbers have been added to the beginning of each line
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+Controllers/
+  AdminTicketController.cs
+  AuthController.cs
+  CommentController.cs
+  TicketCommentController.cs
+  TicketController.cs
+  UserController.cs
+Data/
+  Seed/
+    DataSeeder.cs
+  AppDbContext.cs
+DTOs/
+  Auth/
+    AuthResponse.cs
+    LoginRequest.cs
+    MeResponse.cs
+    RegisterRequest.cs
+  Comment/
+    CommentResponse.cs
+    CreateCommentRequest.cs
+    UpdateCommentRequest.cs
+  Common/
+    PagedResponse<T>.cs
+    PaginationRequest.cs
+  Ticket/
+    CreateMyTicketRequest.cs
+    TicketDetailResponse.cs
+    TicketListResponse.cs
+    TicketQueryRequest.cs
+    TiicketSortBy.cs
+    UpdateMyTicketRequest.cs
+    UpdateTicketAdminRequest.cs
+  User/
+    CreateUserRequest.cs
+    UpdateProfileRequest.cs
+    UpdateUserRequest.cs
+    UserQueryRequest.cs
+    UserResponse.cs
+    UserSortBy.cs
+Exceptions/
+  Filters/
+    ValidationFilter.cs
+  AppException.cs
+  ConflictException.cs
+  ForbiddenException.cs
+  NotFoundException.cs
+  UnauthorizedException.cs
+  ValidationException.cs
+Extensions/
+  QueryableExtensions.cs
+Helpers/
+  AuthorizationHelper.cs
+Mappers/
+  CommentMapper.cs
+  TicketMapper.cs
+  UserMapper.cs
+Middleware/
+  ExceptionMiddleware.cs
+  ExtensionMethod.cs
+Migrations/
+  20260728073813_InitialMigrate.cs
+  20260728073813_InitialMigrate.Designer.cs
+  20260728134532_AddDeletedAtTicket.cs
+  20260728134532_AddDeletedAtTicket.Designer.cs
+  20260801112642_CommentModel.cs
+  20260801112642_CommentModel.Designer.cs
+  20260802123545_DeletedAtuser.cs
+  20260802123545_DeletedAtuser.Designer.cs
+  20260804035210_CreatedAtTicket.cs
+  20260804035210_CreatedAtTicket.Designer.cs
+  20260804041338_CreatedAtColumn.cs
+  20260804041338_CreatedAtColumn.Designer.cs
+  20260804051353_BaseEntity.cs
+  20260804051353_BaseEntity.Designer.cs
+  AppDbContextModelSnapshot.cs
+Models/
+  Base/
+    BaseEntity.cs
+    SoftDeleteEntity.cs
+  Enums/
+    Role.cs
+    TicketPriority.cs
+    TicketStatus.cs
+    UserStatus.cs
+  Comment.cs
+  Ticket.cs
+  User.cs
+Properties/
+  launchSettings.json
+Services/
+  Base/
+    BaseService.cs
+  AuthService.cs
+  CommentService.cs
+  CurrentUserService.cs
+  JwtService.cs
+  TicketService.cs
+  UserService.cs
+.repomixignore
+Helpdesk.Api.csproj
+Helpdesk.Api.http
+Program.cs
+repomix.config.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="Controllers/AdminTicketController.cs">
+ 1: using Helpdesk.Dtos.Ticket;
+ 2: using Helpdesk.Services;
+ 3: using Microsoft.AspNetCore.Authorization;
+ 4: using Microsoft.AspNetCore.Mvc;
+ 5: 
+ 6: namespace Helpdesk.Controllers;
+ 7: 
+ 8: [ApiController]
+ 9: [Route("api/admin/tickets")]
+10: public class AdminTicketsController : ControllerBase
+11: {
+12:     private readonly TicketService _ticketService;
+13: 
+14:     public AdminTicketsController(TicketService ticketService)
+15:     {
+16:         _ticketService = ticketService;
+17:     }
+18: 
+19:     [HttpPut("{id}")]
+20:     public async Task<IActionResult> Update(
+21:         int id,
+22:         UpdateTicketAdminRequest request)
+23:     {
+24:         return Ok(await _ticketService.UpdateTicketAdmin(id, request));
+25:     }
+26: }
+</file>
+
+<file path="Controllers/AuthController.cs">
+ 1: using Helpdesk.Services;
+ 2: using Helpdesk.Dtos.Auth;
+ 3: using Microsoft.AspNetCore.Mvc;
+ 4: using System.Security.Claims;
+ 5: using Microsoft.AspNetCore.Authorization;
+ 6: 
+ 7: namespace Helpdesk.Controllers;
+ 8: 
+ 9: [ApiController]
+10: [Route("api/[controller]")]
+11: public class AuthController : ControllerBase
+12: {
+13:     private readonly AuthService _authService;
+14: 
+15:     public AuthController(AuthService authService)
+16:     {
+17:         _authService = authService;
+18:     }
+19: 
+20:     // [HttpPost("register")]
+21:     // public async Task<IActionResult> Register(RegisterRequest request)
+22:     // {
+23:     //     var user = await _authService.Register(request);
+24: 
+25:     //     return Created("", new
+26:     //     {
+27:     //         user.Id,
+28:     //         user.Name,
+29:     //         user.Email,
+30:     //         user.PhoneNumber
+31:     //     });
+32:     // }
+33: 
+34:     [HttpPost("login")]
+35:     public async Task<IActionResult> Login(LoginRequest request)
+36:     {
+37:         var result = await _authService.Login(request);
+38: 
+39:         return Ok(result);
+40:     }
+41: 
+42:     [Authorize]
+43:     [HttpGet("me")]
+44:     public async Task<IActionResult> Me()
+45:     {
+46:         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+47: 
+48:         if (!int.TryParse(userId, out var id))
+49:             return Unauthorized();
+50: 
+51:         var result = await _authService.Me(id);
+52: 
+53: 
+54:         return Ok(result);
+55:     }
+56: 
+57:     [HttpPost("logout")]
+58:     public IActionResult Logout()
+59:     {
+60:         return Ok(new
+61:         {
+62:             message = "Logout successful."
+63:         });
+64:     }
+65: }
+</file>
+
+<file path="Controllers/CommentController.cs">
+ 1: using Helpdesk.Dtos.Comment;
+ 2: using Helpdesk.Services;
+ 3: using Microsoft.AspNetCore.Authorization;
+ 4: using Microsoft.AspNetCore.Mvc;
+ 5: 
+ 6: namespace Helpdesk.Controllers;
+ 7: 
+ 8: [ApiController]
+ 9: [Route("api/[controller]")]
+10: [Authorize]
+11: public class CommentsController : ControllerBase
+12: {
+13:     private readonly CommentService _commentService;
+14: 
+15:     public CommentsController(CommentService commentService)
+16:     {
+17:         _commentService = commentService;
+18:     }
+19: 
+20:     [HttpPut("{id}")]
+21:     public async Task<IActionResult> Update(
+22:         int id,
+23:         UpdateCommentRequest request)
+24:     {
+25:         return Ok(await _commentService.Update(id, request));
+26:     }
+27: 
+28:     [HttpDelete("{id}")]
+29:     public async Task<IActionResult> Delete(int id)
+30:     {
+31:         await _commentService.Delete(id);
+32: 
+33:         return NoContent();
+34:     }
+35: }
+</file>
+
+<file path="Controllers/TicketCommentController.cs">
+ 1: using Helpdesk.Dtos.Comment;
+ 2: using Helpdesk.Services;
+ 3: using Microsoft.AspNetCore.Authorization;
+ 4: using Microsoft.AspNetCore.Mvc;
+ 5: 
+ 6: namespace Helpdesk.Controllers;
+ 7: 
+ 8: [ApiController]
+ 9: [Route("api/tickets")]
+10: [Authorize]
+11: public class TicketCommentController : ControllerBase
+12: {
+13:     private readonly CommentService _commentService;
+14: 
+15:     public TicketCommentController(CommentService commentService)
+16:     {
+17:         _commentService = commentService;
+18:     }
+19: 
+20:     [HttpGet("{ticketId}/comments")]
+21:     public async Task<IActionResult> GetByTicketId(int ticketId)
+22:     {
+23:         return Ok(await _commentService.GetByTicketId(ticketId));
+24:     }
+25: 
+26:     [HttpPost("{ticketId}/comments")]
+27:     public async Task<IActionResult> Create(
+28:         int ticketId,
+29:         CreateCommentRequest request)
+30:     {
+31:         var comment = await _commentService.Create(ticketId, request);
+32: 
+33:         return CreatedAtAction(
+34:             nameof(GetByTicketId),
+35:             new { ticketId },
+36:             comment);
+37:     }
+38: }
+</file>
+
+<file path="Controllers/TicketController.cs">
+ 1: using Helpdesk.Dtos.Ticket;
+ 2: using Helpdesk.Services;
+ 3: using Microsoft.AspNetCore.Authorization;
+ 4: using Microsoft.AspNetCore.Mvc;
+ 5: 
+ 6: namespace Helpdesk.Controllers;
+ 7: 
+ 8: [ApiController]
+ 9: [Route("api/[controller]")]
+10: [Authorize]
+11: public class TicketsController : ControllerBase
+12: {
+13:     private readonly TicketService _ticketService;
+14: 
+15:     public TicketsController(TicketService ticketService)
+16:     {
+17:         _ticketService = ticketService;
+18:     }
+19: 
+20:     [HttpGet]
+21:     public async Task<IActionResult> GetAll([FromQuery] TicketQueryRequest request)
+22:     {
+23:         return Ok(await _ticketService.GetAll(request));
+24:     }
+25: 
+26:     [HttpGet("{id}")]
+27:     public async Task<IActionResult> GetById(int id)
+28:     {
+29:         return Ok(await _ticketService.GetById(id));
+30:     }
+31: 
+32:     [HttpPost]
+33:     public async Task<IActionResult> Create(CreateMyTicketRequest request)
+34:     {
+35:         var ticket = await _ticketService.Create(request);
+36: 
+37:         return CreatedAtAction(
+38:             nameof(GetById),
+39:             new { id = ticket.Id },
+40:             ticket);
+41:     }
+42: 
+43:     [HttpPut("{id}")]
+44:     public async Task<IActionResult> Update(int id, UpdateMyTicketRequest request)
+45:     {
+46:         return Ok(await _ticketService.UpdateMyTicket(id, request));
+47:     }
+48: 
+49:     [HttpDelete("{id}")]
+50:     public async Task<IActionResult> Delete(int id)
+51:     {
+52:         await _ticketService.Delete(id);
+53: 
+54:         return NoContent();
+55:     }
+56: }
+</file>
+
+<file path="Controllers/UserController.cs">
+ 1: using Helpdesk.Dtos.User;
+ 2: using Helpdesk.Services;
+ 3: using Microsoft.AspNetCore.Authorization;
+ 4: using Microsoft.AspNetCore.Mvc;
+ 5: 
+ 6: namespace Helpdesk.Controllers;
+ 7: 
+ 8: [ApiController]
+ 9: [Route("api/[controller]")]
+10: public class UsersController : ControllerBase
+11: {
+12:     private readonly UserService _userService;
+13: 
+14:     public UsersController(UserService userService)
+15:     {
+16:         _userService = userService;
+17:     }
+18: 
+19:     // =========================
+20:     // Admin
+21:     // =========================
+22: 
+23:     [Authorize(Roles = "Admin")]
+24:     [HttpGet]
+25:     public async Task<IActionResult> GetAll([FromQuery] UserQueryRequest request)
+26:     {
+27:         return Ok(await _userService.GetAll(request));
+28:     }
+29: 
+30:     [Authorize(Roles = "Admin")]
+31:     [HttpGet("{id}")]
+32:     public async Task<IActionResult> GetById(int id)
+33:     {
+34:         return Ok(await _userService.GetById(id));
+35:     }
+36: 
+37:     [Authorize(Roles = "Admin")]
+38:     [HttpPost]
+39:     public async Task<IActionResult> Create(CreateUserRequest request)
+40:     {
+41:         var user = await _userService.Create(request);
+42: 
+43:         return CreatedAtAction(
+44:             nameof(GetById),
+45:             new { id = user.Id },
+46:             user);
+47:     }
+48: 
+49:     [Authorize(Roles = "Admin")]
+50:     [HttpPut("{id}")]
+51:     public async Task<IActionResult> Update(int id, UpdateUserRequest request)
+52:     {
+53:         return Ok(await _userService.Update(id, request));
+54:     }
+55: 
+56:     [Authorize(Roles = "Admin")]
+57:     [HttpDelete("{id}")]
+58:     public async Task<IActionResult> Delete(int id)
+59:     {
+60:         await _userService.Delete(id);
+61: 
+62:         return NoContent();
+63:     }
+64: 
+65:     // =========================
+66:     // Current User
+67:     // =========================
+68: 
+69:     [Authorize]
+70:     [HttpGet("me")]
+71:     public async Task<IActionResult> Me()
+72:     {
+73:         return Ok(await _userService.GetCurrentProfile());
+74:     }
+75: 
+76:     [Authorize]
+77:     [HttpPut("me")]
+78:     public async Task<IActionResult> UpdateProfile(UpdateProfileRequest request)
+79:     {
+80:         return Ok(await _userService.UpdateProfile(request));
+81:     }
+82: }
+</file>
+
+<file path="Data/Seed/DataSeeder.cs">
+ 1: using Helpdesk.Data;
+ 2: using Helpdesk.Models;
+ 3: using Microsoft.EntityFrameworkCore;
+ 4: 
+ 5: namespace Helpdesk;
+ 6: 
+ 7: public static class DataSeeder
+ 8: {
+ 9:     public static async Task SeedAdminAsync(AppDbContext db)
+10:     {
+11:         if (await db.Users.AnyAsync(u => u.Role == Role.Admin))
+12:             return;
+13: 
+14:         var admin = new User
+15:         {
+16:             Name = "Administrator",
+17:             Email = "admin@helpdesk.com",
+18:             PhoneNumber = "08123456789",
+19:             PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+20:             Role = Role.Admin
+21:         };
+22: 
+23:         db.Users.Add(admin);
+24:         await db.SaveChangesAsync();
+25:     }
+26: }
+</file>
+
+<file path="Data/AppDbContext.cs">
+ 1: using Helpdesk.Models;
+ 2: using Helpdesk.Models.Base;
+ 3: using Microsoft.EntityFrameworkCore;
+ 4: 
+ 5: namespace Helpdesk.Data;
+ 6: 
+ 7: public class AppDbContext : DbContext
+ 8: {
+ 9:     public AppDbContext(DbContextOptions<AppDbContext> options)
+10:         : base(options)
+11:     {
+12:     }
+13: 
+14:     public DbSet<User> Users => Set<User>();
+15:     public DbSet<Ticket> Tickets => Set<Ticket>();
+16:     public DbSet<Comment> Comments => Set<Comment>();
+17: 
+18:     public override async Task<int> SaveChangesAsync(
+19:         CancellationToken cancellationToken = default)
+20:     {
+21:         UpdateAuditFields();
+22: 
+23:         return await base.SaveChangesAsync(cancellationToken);
+24:     }
+25: 
+26:     private void UpdateAuditFields()
+27:     {
+28:         var utcNow = DateTime.UtcNow;
+29: 
+30:         foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+31:         {
+32:             if (entry.State == EntityState.Added)
+33:             {
+34:                 entry.Entity.CreatedAt = utcNow;
+35:             }
+36:             else if (entry.State == EntityState.Modified)
+37:             {
+38:                 entry.Entity.UpdatedAt = utcNow;
+39:             }
+40:         }
+41:     }
+42: 
+43:     protected override void OnModelCreating(ModelBuilder modelBuilder)
+44:     {
+45:         modelBuilder.Entity<User>()
+46:             .Property(u => u.Role)
+47:             .HasConversion<string>();
+48: 
+49:         modelBuilder.Entity<User>()
+50:             .HasQueryFilter(u => u.DeletedAt == null);
+51: 
+52:         modelBuilder.Entity<Ticket>()
+53:             .HasQueryFilter(t => t.DeletedAt == null);
+54: 
+55:         modelBuilder.Entity<Comment>()
+56:             .HasQueryFilter(c => c.DeletedAt == null);
+57: 
+58:         base.OnModelCreating(modelBuilder);
+59:     }
+60: }
+</file>
+
+<file path="DTOs/Auth/AuthResponse.cs">
+ 1: namespace Helpdesk.Dtos.Auth;
+ 2: 
+ 3: public class AuthResponse
+ 4: {
+ 5:     public string Token { get; set; } = "";
+ 6: 
+ 7:     public int Id { get; set; }
+ 8: 
+ 9:     public string Name { get; set; } = "";
+10: 
+11:     public string Email { get; set; } = "";
+12: 
+13:     public string Role { get; set; } = "";
+14: }
+</file>
+
+<file path="DTOs/Auth/LoginRequest.cs">
+1: namespace Helpdesk.Dtos.Auth;
+2: 
+3: public class LoginRequest
+4: {
+5: 	public string Email { get; set; } = "";
+6: 
+7: 	public string Password { get; set; } = "";
+8: }
+</file>
+
+<file path="DTOs/Auth/MeResponse.cs">
+1: namespace Helpdesk.Dtos.Auth;
+2: 
+3: public class MeResponse
+4: {
+5: 	public int Id { get; set; }
+6: 	public string Name { get; set; } = "";
+7: 	public string Email { get; set; } = "";
+8: 	public string Role { get; set; } = "";
+9: }
+</file>
+
+<file path="DTOs/Auth/RegisterRequest.cs">
+ 1: namespace Helpdesk.Dtos.Auth;
+ 2: 
+ 3: public class RegisterRequest
+ 4: {
+ 5:     public string Name { get; set; } = "";
+ 6: 
+ 7:     public string Email { get; set; } = "";
+ 8: 
+ 9:     public string Password { get; set; } = "";
+10: 
+11:     public string PhoneNumber { get; set; } = "";
+12: }
+</file>
+
+<file path="DTOs/Comment/CommentResponse.cs">
+ 1: namespace Helpdesk.Dtos.Comment;
+ 2: 
+ 3: public class CommentResponse
+ 4: {
+ 5:     public int Id { get; set; }
+ 6: 
+ 7:     public string Content { get; set; } = "";
+ 8: 
+ 9:     public int TicketId { get; set; }
+10: 
+11:     public int UserId { get; set; }
+12: 
+13:     public string UserName { get; set; } = "";
+14: 
+15:     public DateTime CreatedAt { get; set; }
+16: 
+17:     public DateTime? UpdatedAt { get; set; }
+18: }
+</file>
+
+<file path="DTOs/Comment/CreateCommentRequest.cs">
+ 1: using System.ComponentModel.DataAnnotations;
+ 2: 
+ 3: namespace Helpdesk.Dtos.Comment;
+ 4: 
+ 5: public class CreateCommentRequest
+ 6: {
+ 7:     [Required(ErrorMessage = "Content is required.")]
+ 8:     [StringLength(1000, ErrorMessage = "Content cannot exceed 1000 characters.")]
+ 9:     public string Content { get; set; } = "";
+10: }
+</file>
+
+<file path="DTOs/Comment/UpdateCommentRequest.cs">
+ 1: using System.ComponentModel.DataAnnotations;
+ 2: 
+ 3: namespace Helpdesk.Dtos.Comment;
+ 4: 
+ 5: public class UpdateCommentRequest
+ 6: {
+ 7:     [Required(ErrorMessage = "Content is required.")]
+ 8:     [StringLength(1000, ErrorMessage = "Content cannot exceed 1000 characters.")]
+ 9:     public string Content { get; set; } = "";
+10: }
+</file>
+
+<file path="DTOs/Common/PagedResponse<T>.cs">
+ 1: namespace Helpdesk.Dtos.Common;
+ 2: 
+ 3: public class PagedResponse<T>
+ 4: {
+ 5:     public List<T> Items { get; set; } = [];
+ 6: 
+ 7:     public int Page { get; set; }
+ 8: 
+ 9:     public int PageSize { get; set; }
+10: 
+11:     public int TotalItems { get; set; }
+12: 
+13:     public int TotalPages { get; set; }
+14: }
+</file>
+
+<file path="DTOs/Common/PaginationRequest.cs">
+1: namespace Helpdesk.Dtos.Common;
+2: 
+3: public class PaginationRequest
+4: {
+5:     public int Page { get; set; } = 1;
+6: 
+7:     public int PageSize { get; set; } = 10;
+8: }
+</file>
+
+<file path="DTOs/Ticket/CreateMyTicketRequest.cs">
+ 1: using Helpdesk.Models;
+ 2: using System.ComponentModel.DataAnnotations;
+ 3: 
+ 4: namespace Helpdesk.Dtos.Ticket;
+ 5: 
+ 6: public class CreateMyTicketRequest
+ 7: {
+ 8:     [Required(ErrorMessage = "Title is required.")]
+ 9:     [StringLength(100, ErrorMessage = "Title cannot exceed 100 characters.")]
+10:     public string Title { get; set; } = "";
+11: 
+12:     [Required(ErrorMessage = "Description is required.")]
+13:     [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters.")]
+14:     public string Description { get; set; } = "";
+15: }
+</file>
+
+<file path="DTOs/Ticket/TicketDetailResponse.cs">
+ 1: using Helpdesk.Dtos.Comment;
+ 2: 
+ 3: namespace Helpdesk.Dtos.Ticket;
+ 4: 
+ 5: public class TicketDetailResponse
+ 6: {
+ 7:     public int Id { get; set; }
+ 8: 
+ 9:     public string Title { get; set; } = "";
+10: 
+11:     public string Description { get; set; } = "";
+12: 
+13:     public string Status { get; set; } = "";
+14: 
+15:     public string Priority { get; set; } = "";
+16: 
+17:     public int UserId { get; set; }
+18: 
+19:     public string UserName { get; set; } = "";
+20: 
+21:     public DateTime CreatedAt { get; set; }
+22: 
+23:     public List<CommentResponse> Comments { get; set; } = [];
+24: }
+</file>
+
+<file path="DTOs/Ticket/TicketListResponse.cs">
+ 1: namespace Helpdesk.Dtos.Ticket;
+ 2: 
+ 3: public class TicketListResponse
+ 4: {
+ 5:     public int Id { get; set; }
+ 6: 
+ 7:     public string Title { get; set; } = "";
+ 8: 
+ 9:     public string Status { get; set; } = "";
+10: 
+11:     public string Priority { get; set; } = "";
+12: 
+13:     public int UserId { get; set; }
+14: 
+15:     public string UserName { get; set; } = "";
+16: 
+17:     public DateTime CreatedAt { get; set; }
+18: }
+</file>
+
+<file path="DTOs/Ticket/TicketQueryRequest.cs">
+ 1: using Helpdesk.Models;
+ 2: using Helpdesk.Dtos.Common;
+ 3: 
+ 4: namespace Helpdesk.Dtos.Ticket;
+ 5: 
+ 6: public class TicketQueryRequest : PaginationRequest
+ 7: {
+ 8: 	public string? Search { get; set; }
+ 9: 
+10: 	public TicketStatus? Status { get; set; }
+11: 
+12:     public TicketPriority? Priority { get; set; }
+13: 
+14:     public TicketSortBy? SortBy { get; set; }
+15: 
+16:     public bool Descending { get; set; } = true;
+17: }
+</file>
+
+<file path="DTOs/Ticket/TiicketSortBy.cs">
+1: namespace Helpdesk.Dtos.Ticket;
+2: 
+3: public enum TicketSortBy
+4: {
+5:     CreatedAt,
+6:     Title,
+7:     Priority,
+8:     Status
+9: }
+</file>
+
+<file path="DTOs/Ticket/UpdateMyTicketRequest.cs">
+ 1: using Helpdesk.Models;
+ 2: using System.ComponentModel.DataAnnotations;
+ 3: 
+ 4: namespace Helpdesk.Dtos.Ticket;
+ 5: 
+ 6: public class UpdateMyTicketRequest
+ 7: {
+ 8:     [Required(ErrorMessage = "Title is required.")]
+ 9:     [StringLength(100, ErrorMessage = "Title cannot exceed 100 characters.")]
+10:     public string Title { get; set; } = "";
+11: 
+12:     [Required(ErrorMessage = "Description is required.")]
+13:     [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters.")]
+14:     public string Description { get; set; } = "";
+15: }
+</file>
+
+<file path="DTOs/Ticket/UpdateTicketAdminRequest.cs">
+ 1: using Helpdesk.Models;
+ 2: using System.ComponentModel.DataAnnotations;
+ 3: 
+ 4: namespace Helpdesk.Dtos.Ticket;
+ 5: 
+ 6: public class UpdateTicketAdminRequest
+ 7: {
+ 8:     [Required(ErrorMessage = "Priority is required.")]
+ 9:     public TicketPriority? Priority { get; set; }
+10: 
+11:     [Required(ErrorMessage = "Status is required.")]
+12:     public TicketStatus? Status { get; set; }
+13: }
+</file>
+
+<file path="DTOs/User/CreateUserRequest.cs">
+ 1: using System.ComponentModel.DataAnnotations;
+ 2: 
+ 3: namespace Helpdesk.Dtos.User;
+ 4: 
+ 5: public class CreateUserRequest
+ 6: {
+ 7: 	[Required(ErrorMessage = "Name is required.")]
+ 8:     public string Name { get; set; } = "";
+ 9: 
+10:     [Required(ErrorMessage = "Email is required.")]
+11:     [EmailAddress(ErrorMessage = "Email format is invalid.")]
+12:     public string Email { get; set; } = "";
+13: 
+14:     [Required(ErrorMessage = "Password is required.")]
+15:     [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+16:     public string Password { get; set; } = "";
+17: }
+</file>
+
+<file path="DTOs/User/UpdateProfileRequest.cs">
+ 1: using System.ComponentModel.DataAnnotations;
+ 2: 
+ 3: namespace Helpdesk.Dtos.User;
+ 4: 
+ 5: public class UpdateProfileRequest
+ 6: {
+ 7:     [Required(ErrorMessage = "Name is required.")]
+ 8:     public string Name { get; set; } = "";
+ 9: 
+10:     [Required(ErrorMessage = "Email is required.")]
+11:     [EmailAddress(ErrorMessage = "Email format is invalid.")]
+12:     public string Email { get; set; } = "";
+13: 
+14:     [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+15:     public string? Password { get; set; }
+16: }
+</file>
+
+<file path="DTOs/User/UpdateUserRequest.cs">
+ 1: using Helpdesk.Models;
+ 2: using System.ComponentModel.DataAnnotations;
+ 3: 
+ 4: namespace Helpdesk.Dtos.User;
+ 5: 
+ 6: public class UpdateUserRequest
+ 7: {
+ 8:     [Required(ErrorMessage = "Status is required.")]
+ 9:     public UserStatus? Status { get; set; }
+10: 
+11:     [Required(ErrorMessage = "Role is required.")]
+12:     public Role? Role { get; set; }
+13: }
+</file>
+
+<file path="DTOs/User/UserQueryRequest.cs">
+ 1: using Helpdesk.Dtos.Common;
+ 2: using Helpdesk.Models;
+ 3: 
+ 4: namespace Helpdesk.Dtos.User;
+ 5: 
+ 6: public class UserQueryRequest : PaginationRequest
+ 7: {
+ 8:     public string? Search { get; set; }
+ 9: 
+10:     public Role? Role { get; set; }
+11: 
+12:     public UserStatus? Status { get; set; }
+13: 
+14:     public UserSortBy? SortBy { get; set; }
+15: 
+16:     public bool Descending { get; set; } = true;
+17: }
+</file>
+
+<file path="DTOs/User/UserResponse.cs">
+ 1: namespace Helpdesk.Dtos.User;
+ 2: 
+ 3: public class UserResponse
+ 4: {
+ 5:     public int Id { get; set; }
+ 6: 
+ 7:     public string Name { get; set; } = "";
+ 8: 
+ 9:     public string Email { get; set; } = "";
+10: 
+11:     public string Role { get; set; } = "";
+12: 
+13:     public string Status { get; set; } = "";
+14: }
+</file>
+
+<file path="DTOs/User/UserSortBy.cs">
+ 1: namespace Helpdesk.Dtos.User;
+ 2: 
+ 3: public enum UserSortBy
+ 4: {
+ 5:     Name,
+ 6:     Email,
+ 7:     Role,
+ 8:     Status,
+ 9:     CreatedAt
+10: }
+</file>
+
+<file path="Exceptions/Filters/ValidationFilter.cs">
+ 1: using Helpdesk.Exceptions;
+ 2: using Microsoft.AspNetCore.Mvc.Filters;
+ 3: 
+ 4: namespace Helpdesk.Filters;
+ 5: 
+ 6: public class ValidationFilter : IActionFilter
+ 7: {
+ 8:     public void OnActionExecuting(ActionExecutingContext context)
+ 9:     {
+10:         if (context.ModelState.IsValid)
+11:             return;
+12: 
+13:         var errors = context.ModelState
+14:             .Values
+15:             .SelectMany(v => v.Errors)
+16:             .Select(e => e.ErrorMessage)
+17:             .ToList();
+18: 
+19:         throw new ValidationException(errors);
+20:     }
+21: 
+22:     public void OnActionExecuted(ActionExecutedContext context)
+23:     {
+24:     }
+25: }
+</file>
+
+<file path="Exceptions/AppException.cs">
+ 1: namespace Helpdesk.Exceptions;
+ 2: 
+ 3: public abstract class AppException : Exception
+ 4: {
+ 5:     public int StatusCode { get; }
+ 6: 
+ 7:     protected AppException(string message, int statusCode)
+ 8:         : base(message)
+ 9:     {
+10:         StatusCode = statusCode;
+11:     }
+12: }
+</file>
+
+<file path="Exceptions/ConflictException.cs">
+ 1: using System.Net;
+ 2: 
+ 3: namespace Helpdesk.Exceptions;
+ 4: 
+ 5: public class ConflictException : AppException
+ 6: {
+ 7:     public ConflictException(string message)
+ 8:         : base(message, (int)HttpStatusCode.Conflict)
+ 9:     {
+10:     }
+11: }
+</file>
+
+<file path="Exceptions/ForbiddenException.cs">
+ 1: using System.Net;
+ 2: 
+ 3: namespace Helpdesk.Exceptions;
+ 4: 
+ 5: public class ForbiddenException : AppException
+ 6: {
+ 7:     public ForbiddenException(string message)
+ 8:         : base(message, (int)HttpStatusCode.Forbidden)
+ 9:     {
+10:     }
+11: }
+</file>
+
+<file path="Exceptions/NotFoundException.cs">
+ 1: using System.Net;
+ 2: 
+ 3: namespace Helpdesk.Exceptions;
+ 4: 
+ 5: public class NotFoundException : AppException
+ 6: {
+ 7:     public NotFoundException(string message)
+ 8:         : base(message, (int)HttpStatusCode.NotFound)
+ 9:     {
+10:     }
+11: }
+</file>
+
+<file path="Exceptions/UnauthorizedException.cs">
+ 1: using System.Net;
+ 2: 
+ 3: namespace Helpdesk.Exceptions;
+ 4: 
+ 5: public class UnauthorizedException : AppException
+ 6: {
+ 7:     public UnauthorizedException(string message)
+ 8:         : base(message, (int)HttpStatusCode.Unauthorized)
+ 9:     {
+10:     }
+11: }
+</file>
+
+<file path="Exceptions/ValidationException.cs">
+ 1: using System.Net;
+ 2: 
+ 3: namespace Helpdesk.Exceptions;
+ 4: 
+ 5: public class ValidationException : AppException
+ 6: {
+ 7:     public List<string> Errors { get; }
+ 8: 
+ 9:     public ValidationException(List<string> errors)
+10:         : base("Validation failed.", (int)HttpStatusCode.BadRequest)
+11:     {
+12:         Errors = errors;
+13:     }
+14: 
+15:     public ValidationException(string error)
+16:         : this(new List<string> { error })
+17:     {
+18:     }
+19: }
+</file>
+
+<file path="Extensions/QueryableExtensions.cs">
+ 1: using Microsoft.EntityFrameworkCore;
+ 2: 
+ 3: namespace Helpdesk.Extensions;
+ 4: 
+ 5: public static class QueryableExtensions
+ 6: {
+ 7:     public static IQueryable<T> ApplyPagination<T>(
+ 8:         this IQueryable<T> query,
+ 9:         int page,
+10:         int pageSize)
+11:     {
+12:         return query
+13:             .Skip((page - 1) * pageSize)
+14:             .Take(pageSize);
+15:     }
+16: }
+</file>
+
+<file path="Helpers/AuthorizationHelper.cs">
+ 1: using Helpdesk.Exceptions;
+ 2: using Helpdesk.Models;
+ 3: 
+ 4: namespace Helpdesk.Helpers;
+ 5: 
+ 6: public static class AuthorizationHelper
+ 7: {
+ 8:     public static void EnsureAdmin(User currentUser)
+ 9:     {
+10:         if (currentUser.Role != Role.Admin)
+11:             throw new ForbiddenException("Access denied.");
+12:     }
+13: 
+14:     public static void EnsureOwnerOrAdmin(int ownerId, User currentUser)
+15:     {
+16:         if (currentUser.Role == Role.Admin)
+17:             return;
+18: 
+19:         if (currentUser.Id != ownerId)
+20:             throw new ForbiddenException("Access denied.");
+21:     }
+22: }
+</file>
+
+<file path="Mappers/CommentMapper.cs">
+ 1: using Helpdesk.Dtos.Comment;
+ 2: using Helpdesk.Models;
+ 3: 
+ 4: namespace Helpdesk.Mappers;
+ 5: 
+ 6: public static class CommentMapper
+ 7: {
+ 8:     public static CommentResponse ToCommentResponse(Comment comment)
+ 9:     {
+10:         return new CommentResponse
+11:         {
+12:             Id = comment.Id,
+13:             Content = comment.Content,
+14:             TicketId = comment.TicketId,
+15:             UserId = comment.UserId,
+16:             UserName = comment.User.Name,
+17:             CreatedAt = comment.CreatedAt,
+18:             UpdatedAt = comment.UpdatedAt
+19:         };
+20:     }
+21: }
+</file>
+
+<file path="Mappers/TicketMapper.cs">
+ 1: using Helpdesk.Dtos.Ticket;
+ 2: using Helpdesk.Models;
+ 3: 
+ 4: namespace Helpdesk.Mappers;
+ 5: 
+ 6: public static class TicketMapper
+ 7: {
+ 8:     public static TicketDetailResponse ToDetailResponse(Ticket ticket)
+ 9:     {
+10:         return new TicketDetailResponse
+11:         {
+12:             Id = ticket.Id,
+13:             Title = ticket.Title,
+14:             Description = ticket.Description,
+15:             Priority = ticket.Priority.ToString(),
+16:             Status = ticket.Status.ToString(),
+17:             UserId = ticket.UserId,
+18:             UserName = ticket.User.Name,
+19:             Comments = ticket.Comments
+20:                 .Where(c => c.DeletedAt == null)
+21:                 .OrderBy(c => c.CreatedAt)
+22:                 .Select(CommentMapper.ToCommentResponse)
+23:                 .ToList()
+24:         };
+25:     }
+26: }
+</file>
+
+<file path="Mappers/UserMapper.cs">
+ 1: using Helpdesk.Dtos.User;
+ 2: using Helpdesk.Models;
+ 3: 
+ 4: namespace Helpdesk.Mappers;
+ 5: 
+ 6: public static class UserMapper
+ 7: {
+ 8:     public static UserResponse ToUserResponse(User user)
+ 9:     {
+10:         return new UserResponse
+11:         {
+12:             Id = user.Id,
+13:             Name = user.Name,
+14:             Email = user.Email,
+15:             Role = user.Role.ToString(),
+16:             Status = user.Status.ToString()
+17:         };
+18:     }
+19: }
+</file>
+
+<file path="Middleware/ExceptionMiddleware.cs">
+ 1: using System.Text.Json;
+ 2: using Helpdesk.Exceptions;
+ 3: 
+ 4: namespace Helpdesk.Middleware;
+ 5: 
+ 6: public class ExceptionMiddleware
+ 7: {
+ 8:     private readonly RequestDelegate _next;
+ 9: 
+10:     public ExceptionMiddleware(RequestDelegate next)
+11:     {
+12:         _next = next;
+13:     }
+14: 
+15:     public async Task InvokeAsync(HttpContext context)
+16:     {
+17:         try
+18:         {
+19:             await _next(context);
+20:         }
+21:         catch (ValidationException ex)
+22:         {
+23:             context.Response.StatusCode = ex.StatusCode;
+24: 
+25:             await context.Response.WriteAsJsonAsync(new
+26:             {
+27:                 message = ex.Message,
+28:                 errors = ex.Errors
+29:             });
+30:         }
+31:         catch (AppException ex)
+32:         {
+33:             context.Response.StatusCode = ex.StatusCode;
+34:             context.Response.ContentType = "application/json";
+35: 
+36:             await context.Response.WriteAsync(JsonSerializer.Serialize(new
+37:             {
+38:                 message = ex.Message
+39:             }));
+40:         }
+41:         catch (Exception)
+42:         {
+43:             context.Response.StatusCode = 500;
+44:             context.Response.ContentType = "application/json";
+45: 
+46:             await context.Response.WriteAsync(JsonSerializer.Serialize(new
+47:             {
+48:                 message = "Internal server error."
+49:             }));
+50:         }
+51:     }
+52: }
+</file>
+
+<file path="Middleware/ExtensionMethod.cs">
+1: namespace Helpdesk.Middleware;
+2: 
+3: public static class ExceptionMiddlewareExtensions
+4: {
+5:     public static IApplicationBuilder UseExceptionMiddleware(this IApplicationBuilder app)
+6:     {
+7:         return app.UseMiddleware<ExceptionMiddleware>();
+8:     }
+9: }
+</file>
+
+<file path="Migrations/20260728073813_InitialMigrate.cs">
+ 1: using Microsoft.EntityFrameworkCore.Migrations;
+ 2: using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+ 3: 
+ 4: #nullable disable
+ 5: 
+ 6: namespace Helpdesk.Migrations
+ 7: {
+ 8:     /// <inheritdoc />
+ 9:     public partial class InitialMigrate : Migration
+10:     {
+11:         /// <inheritdoc />
+12:         protected override void Up(MigrationBuilder migrationBuilder)
+13:         {
+14:             migrationBuilder.CreateTable(
+15:                 name: "Users",
+16:                 columns: table => new
+17:                 {
+18:                     Id = table.Column<int>(type: "integer", nullable: false)
+19:                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+20:                     Name = table.Column<string>(type: "text", nullable: false),
+21:                     Email = table.Column<string>(type: "text", nullable: false),
+22:                     PasswordHash = table.Column<string>(type: "text", nullable: false),
+23:                     Role = table.Column<string>(type: "text", nullable: false),
+24:                     PhoneNumber = table.Column<string>(type: "text", nullable: false),
+25:                     Status = table.Column<int>(type: "integer", nullable: false)
+26:                 },
+27:                 constraints: table =>
+28:                 {
+29:                     table.PrimaryKey("PK_Users", x => x.Id);
+30:                 });
+31: 
+32:             migrationBuilder.CreateTable(
+33:                 name: "Tickets",
+34:                 columns: table => new
+35:                 {
+36:                     Id = table.Column<int>(type: "integer", nullable: false)
+37:                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+38:                     Title = table.Column<string>(type: "text", nullable: false),
+39:                     Description = table.Column<string>(type: "text", nullable: false),
+40:                     Priority = table.Column<int>(type: "integer", nullable: false),
+41:                     Status = table.Column<int>(type: "integer", nullable: false),
+42:                     UserId = table.Column<int>(type: "integer", nullable: false)
+43:                 },
+44:                 constraints: table =>
+45:                 {
+46:                     table.PrimaryKey("PK_Tickets", x => x.Id);
+47:                     table.ForeignKey(
+48:                         name: "FK_Tickets_Users_UserId",
+49:                         column: x => x.UserId,
+50:                         principalTable: "Users",
+51:                         principalColumn: "Id",
+52:                         onDelete: ReferentialAction.Cascade);
+53:                 });
+54: 
+55:             migrationBuilder.CreateIndex(
+56:                 name: "IX_Tickets_UserId",
+57:                 table: "Tickets",
+58:                 column: "UserId");
+59:         }
+60: 
+61:         /// <inheritdoc />
+62:         protected override void Down(MigrationBuilder migrationBuilder)
+63:         {
+64:             migrationBuilder.DropTable(
+65:                 name: "Tickets");
+66: 
+67:             migrationBuilder.DropTable(
+68:                 name: "Users");
+69:         }
+70:     }
+71: }
+</file>
+
+<file path="Migrations/20260728073813_InitialMigrate.Designer.cs">
+  1: // <auto-generated />
+  2: using Helpdesk.Data;
+  3: using Microsoft.EntityFrameworkCore;
+  4: using Microsoft.EntityFrameworkCore.Infrastructure;
+  5: using Microsoft.EntityFrameworkCore.Migrations;
+  6: using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+  7: using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+  8: 
+  9: #nullable disable
+ 10: 
+ 11: namespace Helpdesk.Migrations
+ 12: {
+ 13:     [DbContext(typeof(AppDbContext))]
+ 14:     [Migration("20260728073813_InitialMigrate")]
+ 15:     partial class InitialMigrate
+ 16:     {
+ 17:         /// <inheritdoc />
+ 18:         protected override void BuildTargetModel(ModelBuilder modelBuilder)
+ 19:         {
+ 20: #pragma warning disable 612, 618
+ 21:             modelBuilder
+ 22:                 .HasAnnotation("ProductVersion", "10.0.10")
+ 23:                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
+ 24: 
+ 25:             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+ 26: 
+ 27:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+ 28:                 {
+ 29:                     b.Property<int>("Id")
+ 30:                         .ValueGeneratedOnAdd()
+ 31:                         .HasColumnType("integer");
+ 32: 
+ 33:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 34: 
+ 35:                     b.Property<string>("Description")
+ 36:                         .IsRequired()
+ 37:                         .HasColumnType("text");
+ 38: 
+ 39:                     b.Property<int>("Priority")
+ 40:                         .HasColumnType("integer");
+ 41: 
+ 42:                     b.Property<int>("Status")
+ 43:                         .HasColumnType("integer");
+ 44: 
+ 45:                     b.Property<string>("Title")
+ 46:                         .IsRequired()
+ 47:                         .HasColumnType("text");
+ 48: 
+ 49:                     b.Property<int>("UserId")
+ 50:                         .HasColumnType("integer");
+ 51: 
+ 52:                     b.HasKey("Id");
+ 53: 
+ 54:                     b.HasIndex("UserId");
+ 55: 
+ 56:                     b.ToTable("Tickets");
+ 57:                 });
+ 58: 
+ 59:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+ 60:                 {
+ 61:                     b.Property<int>("Id")
+ 62:                         .ValueGeneratedOnAdd()
+ 63:                         .HasColumnType("integer");
+ 64: 
+ 65:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 66: 
+ 67:                     b.Property<string>("Email")
+ 68:                         .IsRequired()
+ 69:                         .HasColumnType("text");
+ 70: 
+ 71:                     b.Property<string>("Name")
+ 72:                         .IsRequired()
+ 73:                         .HasColumnType("text");
+ 74: 
+ 75:                     b.Property<string>("PasswordHash")
+ 76:                         .IsRequired()
+ 77:                         .HasColumnType("text");
+ 78: 
+ 79:                     b.Property<string>("PhoneNumber")
+ 80:                         .IsRequired()
+ 81:                         .HasColumnType("text");
+ 82: 
+ 83:                     b.Property<string>("Role")
+ 84:                         .IsRequired()
+ 85:                         .HasColumnType("text");
+ 86: 
+ 87:                     b.Property<int>("Status")
+ 88:                         .HasColumnType("integer");
+ 89: 
+ 90:                     b.HasKey("Id");
+ 91: 
+ 92:                     b.ToTable("Users");
+ 93:                 });
+ 94: 
+ 95:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+ 96:                 {
+ 97:                     b.HasOne("Helpdesk.Models.User", "User")
+ 98:                         .WithMany()
+ 99:                         .HasForeignKey("UserId")
+100:                         .OnDelete(DeleteBehavior.Cascade)
+101:                         .IsRequired();
+102: 
+103:                     b.Navigation("User");
+104:                 });
+105: #pragma warning restore 612, 618
+106:         }
+107:     }
+108: }
+</file>
+
+<file path="Migrations/20260728134532_AddDeletedAtTicket.cs">
+ 1: using System;
+ 2: using Microsoft.EntityFrameworkCore.Migrations;
+ 3: 
+ 4: #nullable disable
+ 5: 
+ 6: namespace Helpdesk.Migrations
+ 7: {
+ 8:     /// <inheritdoc />
+ 9:     public partial class AddDeletedAtTicket : Migration
+10:     {
+11:         /// <inheritdoc />
+12:         protected override void Up(MigrationBuilder migrationBuilder)
+13:         {
+14:             migrationBuilder.AddColumn<DateTime>(
+15:                 name: "DeletedAt",
+16:                 table: "Tickets",
+17:                 type: "timestamp with time zone",
+18:                 nullable: true);
+19:         }
+20: 
+21:         /// <inheritdoc />
+22:         protected override void Down(MigrationBuilder migrationBuilder)
+23:         {
+24:             migrationBuilder.DropColumn(
+25:                 name: "DeletedAt",
+26:                 table: "Tickets");
+27:         }
+28:     }
+29: }
+</file>
+
+<file path="Migrations/20260728134532_AddDeletedAtTicket.Designer.cs">
+  1: // <auto-generated />
+  2: using System;
+  3: using Helpdesk.Data;
+  4: using Microsoft.EntityFrameworkCore;
+  5: using Microsoft.EntityFrameworkCore.Infrastructure;
+  6: using Microsoft.EntityFrameworkCore.Migrations;
+  7: using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+  8: using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+  9: 
+ 10: #nullable disable
+ 11: 
+ 12: namespace Helpdesk.Migrations
+ 13: {
+ 14:     [DbContext(typeof(AppDbContext))]
+ 15:     [Migration("20260728134532_AddDeletedAtTicket")]
+ 16:     partial class AddDeletedAtTicket
+ 17:     {
+ 18:         /// <inheritdoc />
+ 19:         protected override void BuildTargetModel(ModelBuilder modelBuilder)
+ 20:         {
+ 21: #pragma warning disable 612, 618
+ 22:             modelBuilder
+ 23:                 .HasAnnotation("ProductVersion", "10.0.10")
+ 24:                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
+ 25: 
+ 26:             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+ 27: 
+ 28:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+ 29:                 {
+ 30:                     b.Property<int>("Id")
+ 31:                         .ValueGeneratedOnAdd()
+ 32:                         .HasColumnType("integer");
+ 33: 
+ 34:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 35: 
+ 36:                     b.Property<DateTime?>("DeletedAt")
+ 37:                         .HasColumnType("timestamp with time zone");
+ 38: 
+ 39:                     b.Property<string>("Description")
+ 40:                         .IsRequired()
+ 41:                         .HasColumnType("text");
+ 42: 
+ 43:                     b.Property<int>("Priority")
+ 44:                         .HasColumnType("integer");
+ 45: 
+ 46:                     b.Property<int>("Status")
+ 47:                         .HasColumnType("integer");
+ 48: 
+ 49:                     b.Property<string>("Title")
+ 50:                         .IsRequired()
+ 51:                         .HasColumnType("text");
+ 52: 
+ 53:                     b.Property<int>("UserId")
+ 54:                         .HasColumnType("integer");
+ 55: 
+ 56:                     b.HasKey("Id");
+ 57: 
+ 58:                     b.HasIndex("UserId");
+ 59: 
+ 60:                     b.ToTable("Tickets");
+ 61:                 });
+ 62: 
+ 63:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+ 64:                 {
+ 65:                     b.Property<int>("Id")
+ 66:                         .ValueGeneratedOnAdd()
+ 67:                         .HasColumnType("integer");
+ 68: 
+ 69:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 70: 
+ 71:                     b.Property<string>("Email")
+ 72:                         .IsRequired()
+ 73:                         .HasColumnType("text");
+ 74: 
+ 75:                     b.Property<string>("Name")
+ 76:                         .IsRequired()
+ 77:                         .HasColumnType("text");
+ 78: 
+ 79:                     b.Property<string>("PasswordHash")
+ 80:                         .IsRequired()
+ 81:                         .HasColumnType("text");
+ 82: 
+ 83:                     b.Property<string>("PhoneNumber")
+ 84:                         .IsRequired()
+ 85:                         .HasColumnType("text");
+ 86: 
+ 87:                     b.Property<string>("Role")
+ 88:                         .IsRequired()
+ 89:                         .HasColumnType("text");
+ 90: 
+ 91:                     b.Property<int>("Status")
+ 92:                         .HasColumnType("integer");
+ 93: 
+ 94:                     b.HasKey("Id");
+ 95: 
+ 96:                     b.ToTable("Users");
+ 97:                 });
+ 98: 
+ 99:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+100:                 {
+101:                     b.HasOne("Helpdesk.Models.User", "User")
+102:                         .WithMany()
+103:                         .HasForeignKey("UserId")
+104:                         .OnDelete(DeleteBehavior.Cascade)
+105:                         .IsRequired();
+106: 
+107:                     b.Navigation("User");
+108:                 });
+109: #pragma warning restore 612, 618
+110:         }
+111:     }
+112: }
+</file>
+
+<file path="Migrations/20260801112642_CommentModel.cs">
+ 1: using System;
+ 2: using Microsoft.EntityFrameworkCore.Migrations;
+ 3: using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+ 4: 
+ 5: #nullable disable
+ 6: 
+ 7: namespace Helpdesk.Migrations
+ 8: {
+ 9:     /// <inheritdoc />
+10:     public partial class CommentModel : Migration
+11:     {
+12:         /// <inheritdoc />
+13:         protected override void Up(MigrationBuilder migrationBuilder)
+14:         {
+15:             migrationBuilder.CreateTable(
+16:                 name: "Comments",
+17:                 columns: table => new
+18:                 {
+19:                     Id = table.Column<int>(type: "integer", nullable: false)
+20:                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+21:                     Content = table.Column<string>(type: "text", nullable: false),
+22:                     TicketId = table.Column<int>(type: "integer", nullable: false),
+23:                     UserId = table.Column<int>(type: "integer", nullable: false),
+24:                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+25:                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+26:                     DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+27:                 },
+28:                 constraints: table =>
+29:                 {
+30:                     table.PrimaryKey("PK_Comments", x => x.Id);
+31:                     table.ForeignKey(
+32:                         name: "FK_Comments_Tickets_TicketId",
+33:                         column: x => x.TicketId,
+34:                         principalTable: "Tickets",
+35:                         principalColumn: "Id",
+36:                         onDelete: ReferentialAction.Cascade);
+37:                     table.ForeignKey(
+38:                         name: "FK_Comments_Users_UserId",
+39:                         column: x => x.UserId,
+40:                         principalTable: "Users",
+41:                         principalColumn: "Id",
+42:                         onDelete: ReferentialAction.Cascade);
+43:                 });
+44: 
+45:             migrationBuilder.CreateIndex(
+46:                 name: "IX_Comments_TicketId",
+47:                 table: "Comments",
+48:                 column: "TicketId");
+49: 
+50:             migrationBuilder.CreateIndex(
+51:                 name: "IX_Comments_UserId",
+52:                 table: "Comments",
+53:                 column: "UserId");
+54:         }
+55: 
+56:         /// <inheritdoc />
+57:         protected override void Down(MigrationBuilder migrationBuilder)
+58:         {
+59:             migrationBuilder.DropTable(
+60:                 name: "Comments");
+61:         }
+62:     }
+63: }
+</file>
+
+<file path="Migrations/20260801112642_CommentModel.Designer.cs">
+  1: // <auto-generated />
+  2: using System;
+  3: using Helpdesk.Data;
+  4: using Microsoft.EntityFrameworkCore;
+  5: using Microsoft.EntityFrameworkCore.Infrastructure;
+  6: using Microsoft.EntityFrameworkCore.Migrations;
+  7: using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+  8: using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+  9: 
+ 10: #nullable disable
+ 11: 
+ 12: namespace Helpdesk.Migrations
+ 13: {
+ 14:     [DbContext(typeof(AppDbContext))]
+ 15:     [Migration("20260801112642_CommentModel")]
+ 16:     partial class CommentModel
+ 17:     {
+ 18:         /// <inheritdoc />
+ 19:         protected override void BuildTargetModel(ModelBuilder modelBuilder)
+ 20:         {
+ 21: #pragma warning disable 612, 618
+ 22:             modelBuilder
+ 23:                 .HasAnnotation("ProductVersion", "10.0.10")
+ 24:                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
+ 25: 
+ 26:             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+ 27: 
+ 28:             modelBuilder.Entity("Helpdesk.Models.Comment", b =>
+ 29:                 {
+ 30:                     b.Property<int>("Id")
+ 31:                         .ValueGeneratedOnAdd()
+ 32:                         .HasColumnType("integer");
+ 33: 
+ 34:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 35: 
+ 36:                     b.Property<string>("Content")
+ 37:                         .IsRequired()
+ 38:                         .HasColumnType("text");
+ 39: 
+ 40:                     b.Property<DateTime>("CreatedAt")
+ 41:                         .HasColumnType("timestamp with time zone");
+ 42: 
+ 43:                     b.Property<DateTime?>("DeletedAt")
+ 44:                         .HasColumnType("timestamp with time zone");
+ 45: 
+ 46:                     b.Property<int>("TicketId")
+ 47:                         .HasColumnType("integer");
+ 48: 
+ 49:                     b.Property<DateTime?>("UpdatedAt")
+ 50:                         .HasColumnType("timestamp with time zone");
+ 51: 
+ 52:                     b.Property<int>("UserId")
+ 53:                         .HasColumnType("integer");
+ 54: 
+ 55:                     b.HasKey("Id");
+ 56: 
+ 57:                     b.HasIndex("TicketId");
+ 58: 
+ 59:                     b.HasIndex("UserId");
+ 60: 
+ 61:                     b.ToTable("Comments");
+ 62:                 });
+ 63: 
+ 64:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+ 65:                 {
+ 66:                     b.Property<int>("Id")
+ 67:                         .ValueGeneratedOnAdd()
+ 68:                         .HasColumnType("integer");
+ 69: 
+ 70:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 71: 
+ 72:                     b.Property<DateTime?>("DeletedAt")
+ 73:                         .HasColumnType("timestamp with time zone");
+ 74: 
+ 75:                     b.Property<string>("Description")
+ 76:                         .IsRequired()
+ 77:                         .HasColumnType("text");
+ 78: 
+ 79:                     b.Property<int>("Priority")
+ 80:                         .HasColumnType("integer");
+ 81: 
+ 82:                     b.Property<int>("Status")
+ 83:                         .HasColumnType("integer");
+ 84: 
+ 85:                     b.Property<string>("Title")
+ 86:                         .IsRequired()
+ 87:                         .HasColumnType("text");
+ 88: 
+ 89:                     b.Property<int>("UserId")
+ 90:                         .HasColumnType("integer");
+ 91: 
+ 92:                     b.HasKey("Id");
+ 93: 
+ 94:                     b.HasIndex("UserId");
+ 95: 
+ 96:                     b.ToTable("Tickets");
+ 97:                 });
+ 98: 
+ 99:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+100:                 {
+101:                     b.Property<int>("Id")
+102:                         .ValueGeneratedOnAdd()
+103:                         .HasColumnType("integer");
+104: 
+105:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+106: 
+107:                     b.Property<string>("Email")
+108:                         .IsRequired()
+109:                         .HasColumnType("text");
+110: 
+111:                     b.Property<string>("Name")
+112:                         .IsRequired()
+113:                         .HasColumnType("text");
+114: 
+115:                     b.Property<string>("PasswordHash")
+116:                         .IsRequired()
+117:                         .HasColumnType("text");
+118: 
+119:                     b.Property<string>("PhoneNumber")
+120:                         .IsRequired()
+121:                         .HasColumnType("text");
+122: 
+123:                     b.Property<string>("Role")
+124:                         .IsRequired()
+125:                         .HasColumnType("text");
+126: 
+127:                     b.Property<int>("Status")
+128:                         .HasColumnType("integer");
+129: 
+130:                     b.HasKey("Id");
+131: 
+132:                     b.ToTable("Users");
+133:                 });
+134: 
+135:             modelBuilder.Entity("Helpdesk.Models.Comment", b =>
+136:                 {
+137:                     b.HasOne("Helpdesk.Models.Ticket", "Ticket")
+138:                         .WithMany("Comments")
+139:                         .HasForeignKey("TicketId")
+140:                         .OnDelete(DeleteBehavior.Cascade)
+141:                         .IsRequired();
+142: 
+143:                     b.HasOne("Helpdesk.Models.User", "User")
+144:                         .WithMany("Comments")
+145:                         .HasForeignKey("UserId")
+146:                         .OnDelete(DeleteBehavior.Cascade)
+147:                         .IsRequired();
+148: 
+149:                     b.Navigation("Ticket");
+150: 
+151:                     b.Navigation("User");
+152:                 });
+153: 
+154:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+155:                 {
+156:                     b.HasOne("Helpdesk.Models.User", "User")
+157:                         .WithMany("Tickets")
+158:                         .HasForeignKey("UserId")
+159:                         .OnDelete(DeleteBehavior.Cascade)
+160:                         .IsRequired();
+161: 
+162:                     b.Navigation("User");
+163:                 });
+164: 
+165:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+166:                 {
+167:                     b.Navigation("Comments");
+168:                 });
+169: 
+170:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+171:                 {
+172:                     b.Navigation("Comments");
+173: 
+174:                     b.Navigation("Tickets");
+175:                 });
+176: #pragma warning restore 612, 618
+177:         }
+178:     }
+179: }
+</file>
+
+<file path="Migrations/20260802123545_DeletedAtuser.cs">
+ 1: using System;
+ 2: using Microsoft.EntityFrameworkCore.Migrations;
+ 3: 
+ 4: #nullable disable
+ 5: 
+ 6: namespace Helpdesk.Migrations
+ 7: {
+ 8:     /// <inheritdoc />
+ 9:     public partial class DeletedAtuser : Migration
+10:     {
+11:         /// <inheritdoc />
+12:         protected override void Up(MigrationBuilder migrationBuilder)
+13:         {
+14:             migrationBuilder.AddColumn<DateTime>(
+15:                 name: "DeletedAt",
+16:                 table: "Users",
+17:                 type: "timestamp with time zone",
+18:                 nullable: true);
+19:         }
+20: 
+21:         /// <inheritdoc />
+22:         protected override void Down(MigrationBuilder migrationBuilder)
+23:         {
+24:             migrationBuilder.DropColumn(
+25:                 name: "DeletedAt",
+26:                 table: "Users");
+27:         }
+28:     }
+29: }
+</file>
+
+<file path="Migrations/20260802123545_DeletedAtuser.Designer.cs">
+  1: // <auto-generated />
+  2: using System;
+  3: using Helpdesk.Data;
+  4: using Microsoft.EntityFrameworkCore;
+  5: using Microsoft.EntityFrameworkCore.Infrastructure;
+  6: using Microsoft.EntityFrameworkCore.Migrations;
+  7: using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+  8: using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+  9: 
+ 10: #nullable disable
+ 11: 
+ 12: namespace Helpdesk.Migrations
+ 13: {
+ 14:     [DbContext(typeof(AppDbContext))]
+ 15:     [Migration("20260802123545_DeletedAtuser")]
+ 16:     partial class DeletedAtuser
+ 17:     {
+ 18:         /// <inheritdoc />
+ 19:         protected override void BuildTargetModel(ModelBuilder modelBuilder)
+ 20:         {
+ 21: #pragma warning disable 612, 618
+ 22:             modelBuilder
+ 23:                 .HasAnnotation("ProductVersion", "10.0.10")
+ 24:                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
+ 25: 
+ 26:             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+ 27: 
+ 28:             modelBuilder.Entity("Helpdesk.Models.Comment", b =>
+ 29:                 {
+ 30:                     b.Property<int>("Id")
+ 31:                         .ValueGeneratedOnAdd()
+ 32:                         .HasColumnType("integer");
+ 33: 
+ 34:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 35: 
+ 36:                     b.Property<string>("Content")
+ 37:                         .IsRequired()
+ 38:                         .HasColumnType("text");
+ 39: 
+ 40:                     b.Property<DateTime>("CreatedAt")
+ 41:                         .HasColumnType("timestamp with time zone");
+ 42: 
+ 43:                     b.Property<DateTime?>("DeletedAt")
+ 44:                         .HasColumnType("timestamp with time zone");
+ 45: 
+ 46:                     b.Property<int>("TicketId")
+ 47:                         .HasColumnType("integer");
+ 48: 
+ 49:                     b.Property<DateTime?>("UpdatedAt")
+ 50:                         .HasColumnType("timestamp with time zone");
+ 51: 
+ 52:                     b.Property<int>("UserId")
+ 53:                         .HasColumnType("integer");
+ 54: 
+ 55:                     b.HasKey("Id");
+ 56: 
+ 57:                     b.HasIndex("TicketId");
+ 58: 
+ 59:                     b.HasIndex("UserId");
+ 60: 
+ 61:                     b.ToTable("Comments");
+ 62:                 });
+ 63: 
+ 64:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+ 65:                 {
+ 66:                     b.Property<int>("Id")
+ 67:                         .ValueGeneratedOnAdd()
+ 68:                         .HasColumnType("integer");
+ 69: 
+ 70:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 71: 
+ 72:                     b.Property<DateTime?>("DeletedAt")
+ 73:                         .HasColumnType("timestamp with time zone");
+ 74: 
+ 75:                     b.Property<string>("Description")
+ 76:                         .IsRequired()
+ 77:                         .HasColumnType("text");
+ 78: 
+ 79:                     b.Property<int>("Priority")
+ 80:                         .HasColumnType("integer");
+ 81: 
+ 82:                     b.Property<int>("Status")
+ 83:                         .HasColumnType("integer");
+ 84: 
+ 85:                     b.Property<string>("Title")
+ 86:                         .IsRequired()
+ 87:                         .HasColumnType("text");
+ 88: 
+ 89:                     b.Property<int>("UserId")
+ 90:                         .HasColumnType("integer");
+ 91: 
+ 92:                     b.HasKey("Id");
+ 93: 
+ 94:                     b.HasIndex("UserId");
+ 95: 
+ 96:                     b.ToTable("Tickets");
+ 97:                 });
+ 98: 
+ 99:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+100:                 {
+101:                     b.Property<int>("Id")
+102:                         .ValueGeneratedOnAdd()
+103:                         .HasColumnType("integer");
+104: 
+105:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+106: 
+107:                     b.Property<DateTime?>("DeletedAt")
+108:                         .HasColumnType("timestamp with time zone");
+109: 
+110:                     b.Property<string>("Email")
+111:                         .IsRequired()
+112:                         .HasColumnType("text");
+113: 
+114:                     b.Property<string>("Name")
+115:                         .IsRequired()
+116:                         .HasColumnType("text");
+117: 
+118:                     b.Property<string>("PasswordHash")
+119:                         .IsRequired()
+120:                         .HasColumnType("text");
+121: 
+122:                     b.Property<string>("PhoneNumber")
+123:                         .IsRequired()
+124:                         .HasColumnType("text");
+125: 
+126:                     b.Property<string>("Role")
+127:                         .IsRequired()
+128:                         .HasColumnType("text");
+129: 
+130:                     b.Property<int>("Status")
+131:                         .HasColumnType("integer");
+132: 
+133:                     b.HasKey("Id");
+134: 
+135:                     b.ToTable("Users");
+136:                 });
+137: 
+138:             modelBuilder.Entity("Helpdesk.Models.Comment", b =>
+139:                 {
+140:                     b.HasOne("Helpdesk.Models.Ticket", "Ticket")
+141:                         .WithMany("Comments")
+142:                         .HasForeignKey("TicketId")
+143:                         .OnDelete(DeleteBehavior.Cascade)
+144:                         .IsRequired();
+145: 
+146:                     b.HasOne("Helpdesk.Models.User", "User")
+147:                         .WithMany("Comments")
+148:                         .HasForeignKey("UserId")
+149:                         .OnDelete(DeleteBehavior.Cascade)
+150:                         .IsRequired();
+151: 
+152:                     b.Navigation("Ticket");
+153: 
+154:                     b.Navigation("User");
+155:                 });
+156: 
+157:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+158:                 {
+159:                     b.HasOne("Helpdesk.Models.User", "User")
+160:                         .WithMany("Tickets")
+161:                         .HasForeignKey("UserId")
+162:                         .OnDelete(DeleteBehavior.Cascade)
+163:                         .IsRequired();
+164: 
+165:                     b.Navigation("User");
+166:                 });
+167: 
+168:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+169:                 {
+170:                     b.Navigation("Comments");
+171:                 });
+172: 
+173:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+174:                 {
+175:                     b.Navigation("Comments");
+176: 
+177:                     b.Navigation("Tickets");
+178:                 });
+179: #pragma warning restore 612, 618
+180:         }
+181:     }
+182: }
+</file>
+
+<file path="Migrations/20260804035210_CreatedAtTicket.cs">
+ 1: using System;
+ 2: using Microsoft.EntityFrameworkCore.Migrations;
+ 3: 
+ 4: #nullable disable
+ 5: 
+ 6: namespace Helpdesk.Migrations
+ 7: {
+ 8:     /// <inheritdoc />
+ 9:     public partial class CreatedAtTicket : Migration
+10:     {
+11:         /// <inheritdoc />
+12:         protected override void Up(MigrationBuilder migrationBuilder)
+13:         {
+14:             migrationBuilder.AddColumn<DateTime>(
+15:                 name: "CreatedAt",
+16:                 table: "Tickets",
+17:                 type: "timestamp with time zone",
+18:                 nullable: false,
+19:                 defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+20:         }
+21: 
+22:         /// <inheritdoc />
+23:         protected override void Down(MigrationBuilder migrationBuilder)
+24:         {
+25:             migrationBuilder.DropColumn(
+26:                 name: "CreatedAt",
+27:                 table: "Tickets");
+28:         }
+29:     }
+30: }
+</file>
+
+<file path="Migrations/20260804035210_CreatedAtTicket.Designer.cs">
+  1: // <auto-generated />
+  2: using System;
+  3: using Helpdesk.Data;
+  4: using Microsoft.EntityFrameworkCore;
+  5: using Microsoft.EntityFrameworkCore.Infrastructure;
+  6: using Microsoft.EntityFrameworkCore.Migrations;
+  7: using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+  8: using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+  9: 
+ 10: #nullable disable
+ 11: 
+ 12: namespace Helpdesk.Migrations
+ 13: {
+ 14:     [DbContext(typeof(AppDbContext))]
+ 15:     [Migration("20260804035210_CreatedAtTicket")]
+ 16:     partial class CreatedAtTicket
+ 17:     {
+ 18:         /// <inheritdoc />
+ 19:         protected override void BuildTargetModel(ModelBuilder modelBuilder)
+ 20:         {
+ 21: #pragma warning disable 612, 618
+ 22:             modelBuilder
+ 23:                 .HasAnnotation("ProductVersion", "10.0.10")
+ 24:                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
+ 25: 
+ 26:             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+ 27: 
+ 28:             modelBuilder.Entity("Helpdesk.Models.Comment", b =>
+ 29:                 {
+ 30:                     b.Property<int>("Id")
+ 31:                         .ValueGeneratedOnAdd()
+ 32:                         .HasColumnType("integer");
+ 33: 
+ 34:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 35: 
+ 36:                     b.Property<string>("Content")
+ 37:                         .IsRequired()
+ 38:                         .HasColumnType("text");
+ 39: 
+ 40:                     b.Property<DateTime>("CreatedAt")
+ 41:                         .HasColumnType("timestamp with time zone");
+ 42: 
+ 43:                     b.Property<DateTime?>("DeletedAt")
+ 44:                         .HasColumnType("timestamp with time zone");
+ 45: 
+ 46:                     b.Property<int>("TicketId")
+ 47:                         .HasColumnType("integer");
+ 48: 
+ 49:                     b.Property<DateTime?>("UpdatedAt")
+ 50:                         .HasColumnType("timestamp with time zone");
+ 51: 
+ 52:                     b.Property<int>("UserId")
+ 53:                         .HasColumnType("integer");
+ 54: 
+ 55:                     b.HasKey("Id");
+ 56: 
+ 57:                     b.HasIndex("TicketId");
+ 58: 
+ 59:                     b.HasIndex("UserId");
+ 60: 
+ 61:                     b.ToTable("Comments");
+ 62:                 });
+ 63: 
+ 64:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+ 65:                 {
+ 66:                     b.Property<int>("Id")
+ 67:                         .ValueGeneratedOnAdd()
+ 68:                         .HasColumnType("integer");
+ 69: 
+ 70:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 71: 
+ 72:                     b.Property<DateTime>("CreatedAt")
+ 73:                         .HasColumnType("timestamp with time zone");
+ 74: 
+ 75:                     b.Property<DateTime?>("DeletedAt")
+ 76:                         .HasColumnType("timestamp with time zone");
+ 77: 
+ 78:                     b.Property<string>("Description")
+ 79:                         .IsRequired()
+ 80:                         .HasColumnType("text");
+ 81: 
+ 82:                     b.Property<int>("Priority")
+ 83:                         .HasColumnType("integer");
+ 84: 
+ 85:                     b.Property<int>("Status")
+ 86:                         .HasColumnType("integer");
+ 87: 
+ 88:                     b.Property<string>("Title")
+ 89:                         .IsRequired()
+ 90:                         .HasColumnType("text");
+ 91: 
+ 92:                     b.Property<int>("UserId")
+ 93:                         .HasColumnType("integer");
+ 94: 
+ 95:                     b.HasKey("Id");
+ 96: 
+ 97:                     b.HasIndex("UserId");
+ 98: 
+ 99:                     b.ToTable("Tickets");
+100:                 });
+101: 
+102:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+103:                 {
+104:                     b.Property<int>("Id")
+105:                         .ValueGeneratedOnAdd()
+106:                         .HasColumnType("integer");
+107: 
+108:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+109: 
+110:                     b.Property<DateTime?>("DeletedAt")
+111:                         .HasColumnType("timestamp with time zone");
+112: 
+113:                     b.Property<string>("Email")
+114:                         .IsRequired()
+115:                         .HasColumnType("text");
+116: 
+117:                     b.Property<string>("Name")
+118:                         .IsRequired()
+119:                         .HasColumnType("text");
+120: 
+121:                     b.Property<string>("PasswordHash")
+122:                         .IsRequired()
+123:                         .HasColumnType("text");
+124: 
+125:                     b.Property<string>("PhoneNumber")
+126:                         .IsRequired()
+127:                         .HasColumnType("text");
+128: 
+129:                     b.Property<string>("Role")
+130:                         .IsRequired()
+131:                         .HasColumnType("text");
+132: 
+133:                     b.Property<int>("Status")
+134:                         .HasColumnType("integer");
+135: 
+136:                     b.HasKey("Id");
+137: 
+138:                     b.ToTable("Users");
+139:                 });
+140: 
+141:             modelBuilder.Entity("Helpdesk.Models.Comment", b =>
+142:                 {
+143:                     b.HasOne("Helpdesk.Models.Ticket", "Ticket")
+144:                         .WithMany("Comments")
+145:                         .HasForeignKey("TicketId")
+146:                         .OnDelete(DeleteBehavior.Cascade)
+147:                         .IsRequired();
+148: 
+149:                     b.HasOne("Helpdesk.Models.User", "User")
+150:                         .WithMany("Comments")
+151:                         .HasForeignKey("UserId")
+152:                         .OnDelete(DeleteBehavior.Cascade)
+153:                         .IsRequired();
+154: 
+155:                     b.Navigation("Ticket");
+156: 
+157:                     b.Navigation("User");
+158:                 });
+159: 
+160:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+161:                 {
+162:                     b.HasOne("Helpdesk.Models.User", "User")
+163:                         .WithMany("Tickets")
+164:                         .HasForeignKey("UserId")
+165:                         .OnDelete(DeleteBehavior.Cascade)
+166:                         .IsRequired();
+167: 
+168:                     b.Navigation("User");
+169:                 });
+170: 
+171:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+172:                 {
+173:                     b.Navigation("Comments");
+174:                 });
+175: 
+176:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+177:                 {
+178:                     b.Navigation("Comments");
+179: 
+180:                     b.Navigation("Tickets");
+181:                 });
+182: #pragma warning restore 612, 618
+183:         }
+184:     }
+185: }
+</file>
+
+<file path="Migrations/20260804041338_CreatedAtColumn.cs">
+ 1: using System;
+ 2: using Microsoft.EntityFrameworkCore.Migrations;
+ 3: 
+ 4: #nullable disable
+ 5: 
+ 6: namespace Helpdesk.Migrations
+ 7: {
+ 8:     /// <inheritdoc />
+ 9:     public partial class CreatedAtColumn : Migration
+10:     {
+11:         /// <inheritdoc />
+12:         protected override void Up(MigrationBuilder migrationBuilder)
+13:         {
+14:             migrationBuilder.AddColumn<DateTime>(
+15:                 name: "CreatedAt",
+16:                 table: "Users",
+17:                 type: "timestamp with time zone",
+18:                 nullable: false,
+19:                 defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+20: 
+21:             migrationBuilder.AddColumn<DateTime>(
+22:                 name: "UpdatedAt",
+23:                 table: "Tickets",
+24:                 type: "timestamp with time zone",
+25:                 nullable: true);
+26:         }
+27: 
+28:         /// <inheritdoc />
+29:         protected override void Down(MigrationBuilder migrationBuilder)
+30:         {
+31:             migrationBuilder.DropColumn(
+32:                 name: "CreatedAt",
+33:                 table: "Users");
+34: 
+35:             migrationBuilder.DropColumn(
+36:                 name: "UpdatedAt",
+37:                 table: "Tickets");
+38:         }
+39:     }
+40: }
+</file>
+
+<file path="Migrations/20260804041338_CreatedAtColumn.Designer.cs">
+  1: // <auto-generated />
+  2: using System;
+  3: using Helpdesk.Data;
+  4: using Microsoft.EntityFrameworkCore;
+  5: using Microsoft.EntityFrameworkCore.Infrastructure;
+  6: using Microsoft.EntityFrameworkCore.Migrations;
+  7: using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+  8: using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+  9: 
+ 10: #nullable disable
+ 11: 
+ 12: namespace Helpdesk.Migrations
+ 13: {
+ 14:     [DbContext(typeof(AppDbContext))]
+ 15:     [Migration("20260804041338_CreatedAtColumn")]
+ 16:     partial class CreatedAtColumn
+ 17:     {
+ 18:         /// <inheritdoc />
+ 19:         protected override void BuildTargetModel(ModelBuilder modelBuilder)
+ 20:         {
+ 21: #pragma warning disable 612, 618
+ 22:             modelBuilder
+ 23:                 .HasAnnotation("ProductVersion", "10.0.10")
+ 24:                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
+ 25: 
+ 26:             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+ 27: 
+ 28:             modelBuilder.Entity("Helpdesk.Models.Comment", b =>
+ 29:                 {
+ 30:                     b.Property<int>("Id")
+ 31:                         .ValueGeneratedOnAdd()
+ 32:                         .HasColumnType("integer");
+ 33: 
+ 34:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 35: 
+ 36:                     b.Property<string>("Content")
+ 37:                         .IsRequired()
+ 38:                         .HasColumnType("text");
+ 39: 
+ 40:                     b.Property<DateTime>("CreatedAt")
+ 41:                         .HasColumnType("timestamp with time zone");
+ 42: 
+ 43:                     b.Property<DateTime?>("DeletedAt")
+ 44:                         .HasColumnType("timestamp with time zone");
+ 45: 
+ 46:                     b.Property<int>("TicketId")
+ 47:                         .HasColumnType("integer");
+ 48: 
+ 49:                     b.Property<DateTime?>("UpdatedAt")
+ 50:                         .HasColumnType("timestamp with time zone");
+ 51: 
+ 52:                     b.Property<int>("UserId")
+ 53:                         .HasColumnType("integer");
+ 54: 
+ 55:                     b.HasKey("Id");
+ 56: 
+ 57:                     b.HasIndex("TicketId");
+ 58: 
+ 59:                     b.HasIndex("UserId");
+ 60: 
+ 61:                     b.ToTable("Comments");
+ 62:                 });
+ 63: 
+ 64:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+ 65:                 {
+ 66:                     b.Property<int>("Id")
+ 67:                         .ValueGeneratedOnAdd()
+ 68:                         .HasColumnType("integer");
+ 69: 
+ 70:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 71: 
+ 72:                     b.Property<DateTime>("CreatedAt")
+ 73:                         .HasColumnType("timestamp with time zone");
+ 74: 
+ 75:                     b.Property<DateTime?>("DeletedAt")
+ 76:                         .HasColumnType("timestamp with time zone");
+ 77: 
+ 78:                     b.Property<string>("Description")
+ 79:                         .IsRequired()
+ 80:                         .HasColumnType("text");
+ 81: 
+ 82:                     b.Property<int>("Priority")
+ 83:                         .HasColumnType("integer");
+ 84: 
+ 85:                     b.Property<int>("Status")
+ 86:                         .HasColumnType("integer");
+ 87: 
+ 88:                     b.Property<string>("Title")
+ 89:                         .IsRequired()
+ 90:                         .HasColumnType("text");
+ 91: 
+ 92:                     b.Property<DateTime?>("UpdatedAt")
+ 93:                         .HasColumnType("timestamp with time zone");
+ 94: 
+ 95:                     b.Property<int>("UserId")
+ 96:                         .HasColumnType("integer");
+ 97: 
+ 98:                     b.HasKey("Id");
+ 99: 
+100:                     b.HasIndex("UserId");
+101: 
+102:                     b.ToTable("Tickets");
+103:                 });
+104: 
+105:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+106:                 {
+107:                     b.Property<int>("Id")
+108:                         .ValueGeneratedOnAdd()
+109:                         .HasColumnType("integer");
+110: 
+111:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+112: 
+113:                     b.Property<DateTime>("CreatedAt")
+114:                         .HasColumnType("timestamp with time zone");
+115: 
+116:                     b.Property<DateTime?>("DeletedAt")
+117:                         .HasColumnType("timestamp with time zone");
+118: 
+119:                     b.Property<string>("Email")
+120:                         .IsRequired()
+121:                         .HasColumnType("text");
+122: 
+123:                     b.Property<string>("Name")
+124:                         .IsRequired()
+125:                         .HasColumnType("text");
+126: 
+127:                     b.Property<string>("PasswordHash")
+128:                         .IsRequired()
+129:                         .HasColumnType("text");
+130: 
+131:                     b.Property<string>("PhoneNumber")
+132:                         .IsRequired()
+133:                         .HasColumnType("text");
+134: 
+135:                     b.Property<string>("Role")
+136:                         .IsRequired()
+137:                         .HasColumnType("text");
+138: 
+139:                     b.Property<int>("Status")
+140:                         .HasColumnType("integer");
+141: 
+142:                     b.HasKey("Id");
+143: 
+144:                     b.ToTable("Users");
+145:                 });
+146: 
+147:             modelBuilder.Entity("Helpdesk.Models.Comment", b =>
+148:                 {
+149:                     b.HasOne("Helpdesk.Models.Ticket", "Ticket")
+150:                         .WithMany("Comments")
+151:                         .HasForeignKey("TicketId")
+152:                         .OnDelete(DeleteBehavior.Cascade)
+153:                         .IsRequired();
+154: 
+155:                     b.HasOne("Helpdesk.Models.User", "User")
+156:                         .WithMany("Comments")
+157:                         .HasForeignKey("UserId")
+158:                         .OnDelete(DeleteBehavior.Cascade)
+159:                         .IsRequired();
+160: 
+161:                     b.Navigation("Ticket");
+162: 
+163:                     b.Navigation("User");
+164:                 });
+165: 
+166:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+167:                 {
+168:                     b.HasOne("Helpdesk.Models.User", "User")
+169:                         .WithMany("Tickets")
+170:                         .HasForeignKey("UserId")
+171:                         .OnDelete(DeleteBehavior.Cascade)
+172:                         .IsRequired();
+173: 
+174:                     b.Navigation("User");
+175:                 });
+176: 
+177:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+178:                 {
+179:                     b.Navigation("Comments");
+180:                 });
+181: 
+182:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+183:                 {
+184:                     b.Navigation("Comments");
+185: 
+186:                     b.Navigation("Tickets");
+187:                 });
+188: #pragma warning restore 612, 618
+189:         }
+190:     }
+191: }
+</file>
+
+<file path="Migrations/20260804051353_BaseEntity.cs">
+ 1: using System;
+ 2: using Microsoft.EntityFrameworkCore.Migrations;
+ 3: 
+ 4: #nullable disable
+ 5: 
+ 6: namespace Helpdesk.Migrations
+ 7: {
+ 8:     /// <inheritdoc />
+ 9:     public partial class BaseEntity : Migration
+10:     {
+11:         /// <inheritdoc />
+12:         protected override void Up(MigrationBuilder migrationBuilder)
+13:         {
+14:             migrationBuilder.AddColumn<DateTime>(
+15:                 name: "UpdatedAt",
+16:                 table: "Users",
+17:                 type: "timestamp with time zone",
+18:                 nullable: true);
+19:         }
+20: 
+21:         /// <inheritdoc />
+22:         protected override void Down(MigrationBuilder migrationBuilder)
+23:         {
+24:             migrationBuilder.DropColumn(
+25:                 name: "UpdatedAt",
+26:                 table: "Users");
+27:         }
+28:     }
+29: }
+</file>
+
+<file path="Migrations/20260804051353_BaseEntity.Designer.cs">
+  1: // <auto-generated />
+  2: using System;
+  3: using Helpdesk.Data;
+  4: using Microsoft.EntityFrameworkCore;
+  5: using Microsoft.EntityFrameworkCore.Infrastructure;
+  6: using Microsoft.EntityFrameworkCore.Migrations;
+  7: using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+  8: using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+  9: 
+ 10: #nullable disable
+ 11: 
+ 12: namespace Helpdesk.Migrations
+ 13: {
+ 14:     [DbContext(typeof(AppDbContext))]
+ 15:     [Migration("20260804051353_BaseEntity")]
+ 16:     partial class BaseEntity
+ 17:     {
+ 18:         /// <inheritdoc />
+ 19:         protected override void BuildTargetModel(ModelBuilder modelBuilder)
+ 20:         {
+ 21: #pragma warning disable 612, 618
+ 22:             modelBuilder
+ 23:                 .HasAnnotation("ProductVersion", "10.0.10")
+ 24:                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
+ 25: 
+ 26:             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+ 27: 
+ 28:             modelBuilder.Entity("Helpdesk.Models.Comment", b =>
+ 29:                 {
+ 30:                     b.Property<int>("Id")
+ 31:                         .ValueGeneratedOnAdd()
+ 32:                         .HasColumnType("integer");
+ 33: 
+ 34:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 35: 
+ 36:                     b.Property<string>("Content")
+ 37:                         .IsRequired()
+ 38:                         .HasColumnType("text");
+ 39: 
+ 40:                     b.Property<DateTime>("CreatedAt")
+ 41:                         .HasColumnType("timestamp with time zone");
+ 42: 
+ 43:                     b.Property<DateTime?>("DeletedAt")
+ 44:                         .HasColumnType("timestamp with time zone");
+ 45: 
+ 46:                     b.Property<int>("TicketId")
+ 47:                         .HasColumnType("integer");
+ 48: 
+ 49:                     b.Property<DateTime?>("UpdatedAt")
+ 50:                         .HasColumnType("timestamp with time zone");
+ 51: 
+ 52:                     b.Property<int>("UserId")
+ 53:                         .HasColumnType("integer");
+ 54: 
+ 55:                     b.HasKey("Id");
+ 56: 
+ 57:                     b.HasIndex("TicketId");
+ 58: 
+ 59:                     b.HasIndex("UserId");
+ 60: 
+ 61:                     b.ToTable("Comments");
+ 62:                 });
+ 63: 
+ 64:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+ 65:                 {
+ 66:                     b.Property<int>("Id")
+ 67:                         .ValueGeneratedOnAdd()
+ 68:                         .HasColumnType("integer");
+ 69: 
+ 70:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 71: 
+ 72:                     b.Property<DateTime>("CreatedAt")
+ 73:                         .HasColumnType("timestamp with time zone");
+ 74: 
+ 75:                     b.Property<DateTime?>("DeletedAt")
+ 76:                         .HasColumnType("timestamp with time zone");
+ 77: 
+ 78:                     b.Property<string>("Description")
+ 79:                         .IsRequired()
+ 80:                         .HasColumnType("text");
+ 81: 
+ 82:                     b.Property<int>("Priority")
+ 83:                         .HasColumnType("integer");
+ 84: 
+ 85:                     b.Property<int>("Status")
+ 86:                         .HasColumnType("integer");
+ 87: 
+ 88:                     b.Property<string>("Title")
+ 89:                         .IsRequired()
+ 90:                         .HasColumnType("text");
+ 91: 
+ 92:                     b.Property<DateTime?>("UpdatedAt")
+ 93:                         .HasColumnType("timestamp with time zone");
+ 94: 
+ 95:                     b.Property<int>("UserId")
+ 96:                         .HasColumnType("integer");
+ 97: 
+ 98:                     b.HasKey("Id");
+ 99: 
+100:                     b.HasIndex("UserId");
+101: 
+102:                     b.ToTable("Tickets");
+103:                 });
+104: 
+105:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+106:                 {
+107:                     b.Property<int>("Id")
+108:                         .ValueGeneratedOnAdd()
+109:                         .HasColumnType("integer");
+110: 
+111:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+112: 
+113:                     b.Property<DateTime>("CreatedAt")
+114:                         .HasColumnType("timestamp with time zone");
+115: 
+116:                     b.Property<DateTime?>("DeletedAt")
+117:                         .HasColumnType("timestamp with time zone");
+118: 
+119:                     b.Property<string>("Email")
+120:                         .IsRequired()
+121:                         .HasColumnType("text");
+122: 
+123:                     b.Property<string>("Name")
+124:                         .IsRequired()
+125:                         .HasColumnType("text");
+126: 
+127:                     b.Property<string>("PasswordHash")
+128:                         .IsRequired()
+129:                         .HasColumnType("text");
+130: 
+131:                     b.Property<string>("PhoneNumber")
+132:                         .IsRequired()
+133:                         .HasColumnType("text");
+134: 
+135:                     b.Property<string>("Role")
+136:                         .IsRequired()
+137:                         .HasColumnType("text");
+138: 
+139:                     b.Property<int>("Status")
+140:                         .HasColumnType("integer");
+141: 
+142:                     b.Property<DateTime?>("UpdatedAt")
+143:                         .HasColumnType("timestamp with time zone");
+144: 
+145:                     b.HasKey("Id");
+146: 
+147:                     b.ToTable("Users");
+148:                 });
+149: 
+150:             modelBuilder.Entity("Helpdesk.Models.Comment", b =>
+151:                 {
+152:                     b.HasOne("Helpdesk.Models.Ticket", "Ticket")
+153:                         .WithMany("Comments")
+154:                         .HasForeignKey("TicketId")
+155:                         .OnDelete(DeleteBehavior.Cascade)
+156:                         .IsRequired();
+157: 
+158:                     b.HasOne("Helpdesk.Models.User", "User")
+159:                         .WithMany("Comments")
+160:                         .HasForeignKey("UserId")
+161:                         .OnDelete(DeleteBehavior.Cascade)
+162:                         .IsRequired();
+163: 
+164:                     b.Navigation("Ticket");
+165: 
+166:                     b.Navigation("User");
+167:                 });
+168: 
+169:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+170:                 {
+171:                     b.HasOne("Helpdesk.Models.User", "User")
+172:                         .WithMany("Tickets")
+173:                         .HasForeignKey("UserId")
+174:                         .OnDelete(DeleteBehavior.Cascade)
+175:                         .IsRequired();
+176: 
+177:                     b.Navigation("User");
+178:                 });
+179: 
+180:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+181:                 {
+182:                     b.Navigation("Comments");
+183:                 });
+184: 
+185:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+186:                 {
+187:                     b.Navigation("Comments");
+188: 
+189:                     b.Navigation("Tickets");
+190:                 });
+191: #pragma warning restore 612, 618
+192:         }
+193:     }
+194: }
+</file>
+
+<file path="Migrations/AppDbContextModelSnapshot.cs">
+  1: // <auto-generated />
+  2: using System;
+  3: using Helpdesk.Data;
+  4: using Microsoft.EntityFrameworkCore;
+  5: using Microsoft.EntityFrameworkCore.Infrastructure;
+  6: using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+  7: using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+  8: 
+  9: #nullable disable
+ 10: 
+ 11: namespace Helpdesk.Migrations
+ 12: {
+ 13:     [DbContext(typeof(AppDbContext))]
+ 14:     partial class AppDbContextModelSnapshot : ModelSnapshot
+ 15:     {
+ 16:         protected override void BuildModel(ModelBuilder modelBuilder)
+ 17:         {
+ 18: #pragma warning disable 612, 618
+ 19:             modelBuilder
+ 20:                 .HasAnnotation("ProductVersion", "10.0.10")
+ 21:                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
+ 22: 
+ 23:             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+ 24: 
+ 25:             modelBuilder.Entity("Helpdesk.Models.Comment", b =>
+ 26:                 {
+ 27:                     b.Property<int>("Id")
+ 28:                         .ValueGeneratedOnAdd()
+ 29:                         .HasColumnType("integer");
+ 30: 
+ 31:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 32: 
+ 33:                     b.Property<string>("Content")
+ 34:                         .IsRequired()
+ 35:                         .HasColumnType("text");
+ 36: 
+ 37:                     b.Property<DateTime>("CreatedAt")
+ 38:                         .HasColumnType("timestamp with time zone");
+ 39: 
+ 40:                     b.Property<DateTime?>("DeletedAt")
+ 41:                         .HasColumnType("timestamp with time zone");
+ 42: 
+ 43:                     b.Property<int>("TicketId")
+ 44:                         .HasColumnType("integer");
+ 45: 
+ 46:                     b.Property<DateTime?>("UpdatedAt")
+ 47:                         .HasColumnType("timestamp with time zone");
+ 48: 
+ 49:                     b.Property<int>("UserId")
+ 50:                         .HasColumnType("integer");
+ 51: 
+ 52:                     b.HasKey("Id");
+ 53: 
+ 54:                     b.HasIndex("TicketId");
+ 55: 
+ 56:                     b.HasIndex("UserId");
+ 57: 
+ 58:                     b.ToTable("Comments");
+ 59:                 });
+ 60: 
+ 61:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+ 62:                 {
+ 63:                     b.Property<int>("Id")
+ 64:                         .ValueGeneratedOnAdd()
+ 65:                         .HasColumnType("integer");
+ 66: 
+ 67:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+ 68: 
+ 69:                     b.Property<DateTime>("CreatedAt")
+ 70:                         .HasColumnType("timestamp with time zone");
+ 71: 
+ 72:                     b.Property<DateTime?>("DeletedAt")
+ 73:                         .HasColumnType("timestamp with time zone");
+ 74: 
+ 75:                     b.Property<string>("Description")
+ 76:                         .IsRequired()
+ 77:                         .HasColumnType("text");
+ 78: 
+ 79:                     b.Property<int>("Priority")
+ 80:                         .HasColumnType("integer");
+ 81: 
+ 82:                     b.Property<int>("Status")
+ 83:                         .HasColumnType("integer");
+ 84: 
+ 85:                     b.Property<string>("Title")
+ 86:                         .IsRequired()
+ 87:                         .HasColumnType("text");
+ 88: 
+ 89:                     b.Property<DateTime?>("UpdatedAt")
+ 90:                         .HasColumnType("timestamp with time zone");
+ 91: 
+ 92:                     b.Property<int>("UserId")
+ 93:                         .HasColumnType("integer");
+ 94: 
+ 95:                     b.HasKey("Id");
+ 96: 
+ 97:                     b.HasIndex("UserId");
+ 98: 
+ 99:                     b.ToTable("Tickets");
+100:                 });
+101: 
+102:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+103:                 {
+104:                     b.Property<int>("Id")
+105:                         .ValueGeneratedOnAdd()
+106:                         .HasColumnType("integer");
+107: 
+108:                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+109: 
+110:                     b.Property<DateTime>("CreatedAt")
+111:                         .HasColumnType("timestamp with time zone");
+112: 
+113:                     b.Property<DateTime?>("DeletedAt")
+114:                         .HasColumnType("timestamp with time zone");
+115: 
+116:                     b.Property<string>("Email")
+117:                         .IsRequired()
+118:                         .HasColumnType("text");
+119: 
+120:                     b.Property<string>("Name")
+121:                         .IsRequired()
+122:                         .HasColumnType("text");
+123: 
+124:                     b.Property<string>("PasswordHash")
+125:                         .IsRequired()
+126:                         .HasColumnType("text");
+127: 
+128:                     b.Property<string>("PhoneNumber")
+129:                         .IsRequired()
+130:                         .HasColumnType("text");
+131: 
+132:                     b.Property<string>("Role")
+133:                         .IsRequired()
+134:                         .HasColumnType("text");
+135: 
+136:                     b.Property<int>("Status")
+137:                         .HasColumnType("integer");
+138: 
+139:                     b.Property<DateTime?>("UpdatedAt")
+140:                         .HasColumnType("timestamp with time zone");
+141: 
+142:                     b.HasKey("Id");
+143: 
+144:                     b.ToTable("Users");
+145:                 });
+146: 
+147:             modelBuilder.Entity("Helpdesk.Models.Comment", b =>
+148:                 {
+149:                     b.HasOne("Helpdesk.Models.Ticket", "Ticket")
+150:                         .WithMany("Comments")
+151:                         .HasForeignKey("TicketId")
+152:                         .OnDelete(DeleteBehavior.Cascade)
+153:                         .IsRequired();
+154: 
+155:                     b.HasOne("Helpdesk.Models.User", "User")
+156:                         .WithMany("Comments")
+157:                         .HasForeignKey("UserId")
+158:                         .OnDelete(DeleteBehavior.Cascade)
+159:                         .IsRequired();
+160: 
+161:                     b.Navigation("Ticket");
+162: 
+163:                     b.Navigation("User");
+164:                 });
+165: 
+166:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+167:                 {
+168:                     b.HasOne("Helpdesk.Models.User", "User")
+169:                         .WithMany("Tickets")
+170:                         .HasForeignKey("UserId")
+171:                         .OnDelete(DeleteBehavior.Cascade)
+172:                         .IsRequired();
+173: 
+174:                     b.Navigation("User");
+175:                 });
+176: 
+177:             modelBuilder.Entity("Helpdesk.Models.Ticket", b =>
+178:                 {
+179:                     b.Navigation("Comments");
+180:                 });
+181: 
+182:             modelBuilder.Entity("Helpdesk.Models.User", b =>
+183:                 {
+184:                     b.Navigation("Comments");
+185: 
+186:                     b.Navigation("Tickets");
+187:                 });
+188: #pragma warning restore 612, 618
+189:         }
+190:     }
+191: }
+</file>
+
+<file path="Models/Base/BaseEntity.cs">
+ 1: namespace Helpdesk.Models.Base;
+ 2: 
+ 3: public abstract class BaseEntity
+ 4: {
+ 5:     public int Id { get; set; }
+ 6: 
+ 7:     public DateTime CreatedAt { get; set; }
+ 8: 
+ 9:     public DateTime? UpdatedAt { get; set; }
+10: }
+</file>
+
+<file path="Models/Base/SoftDeleteEntity.cs">
+1: namespace Helpdesk.Models.Base;
+2: 
+3: public abstract class SoftDeleteEntity : BaseEntity
+4: {
+5:     public DateTime? DeletedAt { get; set; }
+6: }
+</file>
+
+<file path="Models/Enums/Role.cs">
+1: namespace Helpdesk.Models;
+2: 
+3: public enum Role
+4: {
+5:     User,
+6:     Admin
+7: }
+</file>
+
+<file path="Models/Enums/TicketPriority.cs">
+1: namespace Helpdesk.Models;
+2: 
+3: public enum TicketPriority
+4: {
+5:     Low,
+6:     Medium,
+7:     High,
+8:     Critical
+9: }
+</file>
+
+<file path="Models/Enums/TicketStatus.cs">
+1: namespace Helpdesk.Models;
+2: 
+3: public enum TicketStatus
+4: {
+5:     Open,
+6:     InProgress,
+7:     Resolved,
+8:     Closed
+9: }
+</file>
+
+<file path="Models/Enums/UserStatus.cs">
+1: namespace Helpdesk.Models;
+2: 
+3: public enum UserStatus
+4: {
+5:     Active,
+6:     Inactive
+7: }
+</file>
+
+<file path="Models/Comment.cs">
+ 1: using Helpdesk.Models.Base;
+ 2: 
+ 3: namespace Helpdesk.Models;
+ 4: 
+ 5: public class Comment : SoftDeleteEntity
+ 6: {
+ 7:     public string Content { get; set; } = "";
+ 8: 
+ 9:     public int TicketId { get; set; }
+10:     public Ticket Ticket { get; set; } = null!;
+11: 
+12:     public int UserId { get; set; }
+13:     public User User { get; set; } = null!;
+14: }
+</file>
+
+<file path="Models/Ticket.cs">
+ 1: using Helpdesk.Models.Base;
+ 2: 
+ 3: namespace Helpdesk.Models;
+ 4: 
+ 5: public class Ticket : SoftDeleteEntity
+ 6: {
+ 7:     public string Title { get; set; } = "";
+ 8: 
+ 9:     public string Description { get; set; } = "";
+10: 
+11:     public TicketPriority Priority { get; set; } = TicketPriority.Medium;
+12: 
+13:     public TicketStatus Status { get; set; } = TicketStatus.Open;
+14: 
+15:     public int UserId { get; set; }
+16: 
+17:     public User User { get; set; } = null!;
+18: 
+19:     public ICollection<Comment> Comments { get; set; } = [];
+20: }
+</file>
+
+<file path="Models/User.cs">
+ 1: using Helpdesk.Models.Base;
+ 2: 
+ 3: namespace Helpdesk.Models;
+ 4: 
+ 5: public class User : SoftDeleteEntity
+ 6: {
+ 7:     public string Name { get; set; } = "";
+ 8: 
+ 9:     public string Email { get; set; } = "";
+10: 
+11:     public string PasswordHash { get; set; } = "";
+12: 
+13:     public Role Role { get; set; } = Role.User;
+14: 
+15:     public string PhoneNumber { get; set; } = "";
+16: 
+17:     public UserStatus Status { get; set; } = UserStatus.Active;
+18: 
+19:     public ICollection<Ticket> Tickets { get; set; } = [];
+20: 
+21:     public ICollection<Comment> Comments { get; set; } = [];
+22: }
+</file>
+
+<file path="Properties/launchSettings.json">
+ 1: {
+ 2:   "$schema": "https://json.schemastore.org/launchsettings.json",
+ 3:   "profiles": {
+ 4:     "http": {
+ 5:       "commandName": "Project",
+ 6:       "dotnetRunMessages": true,
+ 7:       "launchBrowser": false,
+ 8:       "applicationUrl": "http://localhost:5109",
+ 9:       "environmentVariables": {
+10:         "ASPNETCORE_ENVIRONMENT": "Development"
+11:       }
+12:     },
+13:     "https": {
+14:       "commandName": "Project",
+15:       "dotnetRunMessages": true,
+16:       "launchBrowser": false,
+17:       "applicationUrl": "https://localhost:7173;http://localhost:5109",
+18:       "environmentVariables": {
+19:         "ASPNETCORE_ENVIRONMENT": "Development"
+20:       }
+21:     }
+22:   }
+23: }
+</file>
+
+<file path="Services/Base/BaseService.cs">
+ 1: using Helpdesk.Data;
+ 2: using Helpdesk.Models;
+ 3: 
+ 4: namespace Helpdesk.Services.Base;
+ 5: 
+ 6: public abstract class BaseService
+ 7: {
+ 8:     protected readonly AppDbContext Context;
+ 9:     protected readonly CurrentUserService CurrentUserService;
+10: 
+11:     protected BaseService(
+12:         AppDbContext context,
+13:         CurrentUserService currentUserService)
+14:     {
+15:         Context = context;
+16:         CurrentUserService = currentUserService;
+17:     }
+18: 
+19:     protected Task<User> GetCurrentUser()
+20:         => CurrentUserService.GetAsync();
+21: }
+</file>
+
+<file path="Services/AuthService.cs">
+ 1: using BCrypt.Net;
+ 2: using Helpdesk.Data;
+ 3: using Helpdesk.Dtos.Auth;
+ 4: using Helpdesk.Models;
+ 5: using Helpdesk.Exceptions;
+ 6: using Helpdesk.Helpers;
+ 7: using Microsoft.EntityFrameworkCore;
+ 8: 
+ 9: namespace Helpdesk.Services;
+10: 
+11: public class AuthService
+12: {
+13:     private readonly AppDbContext _context;
+14:     private readonly JwtService _jwtService;
+15: 
+16:     public AuthService(AppDbContext context, JwtService jwtService)
+17:     {
+18:         _context = context;
+19:         _jwtService = jwtService;
+20:     }
+21: 
+22:     public async Task<AuthResponse> Login(LoginRequest request)
+23:     {
+24:         var user = await _context.Users
+25:             .FirstOrDefaultAsync(u =>
+26:                 u.Email == request.Email &&
+27:                 u.Status == UserStatus.Active);
+28: 
+29:         if (user == null)
+30:             throw new UnauthorizedException("Invalid email or password.");
+31: 
+32:         var validPassword = BCrypt.Net.BCrypt.Verify(
+33:             request.Password,
+34:             user.PasswordHash
+35:         );
+36: 
+37:         if (!validPassword)
+38:             throw new UnauthorizedException("Invalid email or password.");
+39: 
+40:         var token = _jwtService.GenerateToken(user);
+41: 
+42:         return new AuthResponse
+43:         {
+44:             Token = token,
+45:             Id = user.Id,
+46:             Name = user.Name,
+47:             Email = user.Email,
+48:             Role = user.Role.ToString()
+49:         };
+50:     }
+51: 
+52:     public async Task<MeResponse?> Me(int id)
+53:     {
+54:         var user = await _context.Users.FindAsync(id);
+55: 
+56:         if (user == null)
+57:             throw new NotFoundException("User not found.");
+58: 
+59:         return new MeResponse
+60:         {
+61:             Id = user.Id,
+62:             Name = user.Name,
+63:             Email = user.Email,
+64:             Role = user.Role.ToString()
+65:         };
+66:     }
+67: }
+</file>
+
+<file path="Services/CommentService.cs">
+  1: using Helpdesk.Data;
+  2: using Helpdesk.Exceptions;
+  3: using Helpdesk.Helpers;
+  4: using Helpdesk.Mappers;
+  5: using Helpdesk.Models;
+  6: using Helpdesk.Services.Base;
+  7: using Helpdesk.Dtos.Comment;
+  8: using Microsoft.EntityFrameworkCore;
+  9: 
+ 10: namespace Helpdesk.Services;
+ 11: 
+ 12: public class CommentService : BaseService
+ 13: {
+ 14:     public CommentService(
+ 15:         AppDbContext context,
+ 16:         CurrentUserService currentUserService)
+ 17:         : base(context, currentUserService)
+ 18:     {
+ 19:     }
+ 20:     
+ 21:     private async Task<Ticket> GetTicketOrThrow(int id)
+ 22:     {
+ 23:         var ticket = await Context.Tickets
+ 24:             .FirstOrDefaultAsync(t => t.Id == id);
+ 25: 
+ 26:         if (ticket == null)
+ 27:             throw new NotFoundException("Ticket not found.");
+ 28: 
+ 29:         return ticket;
+ 30:     }
+ 31: 
+ 32:     private async Task<Comment> GetCommentOrThrow(
+ 33:         int id,
+ 34:         bool includeUser = false)
+ 35:     {
+ 36:         IQueryable<Comment> query = Context.Comments.AsQueryable();
+ 37: 
+ 38:         if (includeUser)
+ 39:         {
+ 40:             query = query.Include(c => c.User);
+ 41:         }
+ 42: 
+ 43:         var comment = await query
+ 44:             .FirstOrDefaultAsync(c => c.Id == id);
+ 45: 
+ 46:         if (comment == null)
+ 47:             throw new NotFoundException("Comment not found.");
+ 48: 
+ 49:         return comment;
+ 50:     }
+ 51: 
+ 52:     public async Task<List<CommentResponse>> GetByTicketId(int ticketId)
+ 53:     {
+ 54:         var ticket = await GetTicketOrThrow(ticketId);
+ 55: 
+ 56:         var currentUser = await GetCurrentUser();
+ 57: 
+ 58:         AuthorizationHelper.EnsureOwnerOrAdmin(
+ 59:             ticket.UserId,
+ 60:             currentUser);
+ 61: 
+ 62:         return await Context.Comments
+ 63:             .Where(c => c.TicketId == ticketId)
+ 64:             .OrderBy(c => c.CreatedAt)
+ 65:             .Select(c => new CommentResponse
+ 66:             {
+ 67:                 Id = c.Id,
+ 68:                 Content = c.Content,
+ 69:                 TicketId = c.TicketId,
+ 70:                 UserId = c.UserId,
+ 71:                 UserName = c.User.Name,
+ 72:                 CreatedAt = c.CreatedAt,
+ 73:                 UpdatedAt = c.UpdatedAt
+ 74:             })
+ 75:             .ToListAsync();
+ 76:     }
+ 77: 
+ 78:     public async Task<CommentResponse> Create(
+ 79:         int ticketId,
+ 80:         CreateCommentRequest request)
+ 81:     {
+ 82:         var ticket = await GetTicketOrThrow(ticketId);
+ 83: 
+ 84:         var currentUser = await GetCurrentUser();
+ 85: 
+ 86:         AuthorizationHelper.EnsureOwnerOrAdmin(
+ 87:             ticket.UserId,
+ 88:             currentUser);
+ 89: 
+ 90:         var comment = new Comment
+ 91:         {
+ 92:             Content = request.Content.Trim(),
+ 93:             TicketId = ticketId,
+ 94:             UserId = currentUser.Id,
+ 95:             User = currentUser
+ 96:         };
+ 97: 
+ 98:         Context.Comments.Add(comment);
+ 99: 
+100:         await Context.SaveChangesAsync();
+101: 
+102:         return CommentMapper.ToCommentResponse(comment);
+103:     }
+104: 
+105:     public async Task<CommentResponse> Update(
+106:         int id,
+107:         UpdateCommentRequest request)
+108:     {
+109:         var comment = await GetCommentOrThrow(
+110:             id,
+111:             includeUser: true);
+112: 
+113:         var currentUser = await GetCurrentUser();
+114: 
+115:         AuthorizationHelper.EnsureOwnerOrAdmin(
+116:             comment.UserId,
+117:             currentUser);
+118: 
+119:         comment.Content = request.Content.Trim();
+120: 
+121:         await Context.SaveChangesAsync();
+122: 
+123:         return CommentMapper.ToCommentResponse(comment);
+124:     }
+125: 
+126:     public async Task Delete(int id)
+127:     {
+128:         var comment = await GetCommentOrThrow(id);
+129: 
+130:         var currentUser = await GetCurrentUser();
+131: 
+132:         AuthorizationHelper.EnsureOwnerOrAdmin(
+133:             comment.UserId,
+134:             currentUser);
+135: 
+136:         comment.DeletedAt = DateTime.UtcNow;
+137: 
+138:         await Context.SaveChangesAsync();
+139:     }
+140: }
+</file>
+
+<file path="Services/CurrentUserService.cs">
+ 1: using System.Security.Claims;
+ 2: using Helpdesk.Data;
+ 3: using Helpdesk.Exceptions;
+ 4: using Helpdesk.Models;
+ 5: 
+ 6: namespace Helpdesk.Services;
+ 7: 
+ 8: public class CurrentUserService
+ 9: {
+10:     private readonly IHttpContextAccessor _httpContextAccessor;
+11:     private readonly AppDbContext _context;
+12: 
+13:     public CurrentUserService(
+14:         IHttpContextAccessor httpContextAccessor,
+15:         AppDbContext context)
+16:     {
+17:         _httpContextAccessor = httpContextAccessor;
+18:         _context = context;
+19:     }
+20: 
+21:     public async Task<User> GetAsync()
+22:     {
+23:         var principal = _httpContextAccessor.HttpContext?.User;
+24: 
+25:         if (principal == null)
+26:             throw new UnauthorizedAccessException();
+27: 
+28:         var idClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
+29: 
+30:         if (idClaim == null)
+31:             throw new UnauthorizedAccessException();
+32: 
+33:         var userId = int.Parse(idClaim.Value);
+34: 
+35:         var user = await _context.Users.FindAsync(userId);
+36: 
+37:         if (user == null)
+38:             throw new UnauthorizedAccessException();
+39: 
+40:         return user;
+41:     }
+42: }
+</file>
+
+<file path="Services/JwtService.cs">
+ 1: using System.IdentityModel.Tokens.Jwt;
+ 2: using System.Security.Claims;
+ 3: using System.Text;
+ 4: using Helpdesk.Models;
+ 5: using Microsoft.IdentityModel.Tokens;
+ 6: 
+ 7: namespace Helpdesk.Services;
+ 8: 
+ 9: public class JwtService
+10: {
+11:     private readonly IConfiguration _configuration;
+12: 
+13:     public JwtService(IConfiguration configuration)
+14:     {
+15:         _configuration = configuration;
+16:     }
+17: 
+18:     public string GenerateToken(User user)
+19:     {
+20:         var claims = new[]
+21:         {
+22:             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+23:             new Claim(ClaimTypes.Name, user.Name),
+24:             new Claim(ClaimTypes.Email, user.Email),
+25:             new Claim(ClaimTypes.Role, user.Role.ToString())
+26:         };
+27: 
+28:         var key = new SymmetricSecurityKey(
+29:             Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!)
+30:         );
+31: 
+32:         var credentials = new SigningCredentials(
+33:             key,
+34:             SecurityAlgorithms.HmacSha256
+35:         );
+36: 
+37:         var token = new JwtSecurityToken(
+38:             issuer: _configuration["Jwt:Issuer"],
+39:             audience: _configuration["Jwt:Audience"],
+40:             claims: claims,
+41:             expires: DateTime.UtcNow.AddMinutes(
+42:                 int.Parse(_configuration["Jwt:ExpireMinutes"]!)
+43:             ),
+44:             signingCredentials: credentials
+45:         );
+46: 
+47:         return new JwtSecurityTokenHandler().WriteToken(token);
+48:     }
+49: }
+</file>
+
+<file path="Services/TicketService.cs">
+  1: using Helpdesk.Services.Base;
+  2: using Helpdesk.Data;
+  3: using Helpdesk.Dtos.Ticket;
+  4: using Helpdesk.Dtos.Common;
+  5: using Helpdesk.Exceptions;
+  6: using Helpdesk.Helpers;
+  7: using Helpdesk.Mappers;
+  8: using Helpdesk.Models;
+  9: using Helpdesk.Extensions;
+ 10: using Microsoft.EntityFrameworkCore;
+ 11: 
+ 12: namespace Helpdesk.Services;
+ 13: 
+ 14: public class TicketService : BaseService
+ 15: {
+ 16:     public TicketService(
+ 17:         AppDbContext context,
+ 18:         CurrentUserService currentUserService)
+ 19:         : base(context, currentUserService)
+ 20:     {
+ 21:     }
+ 22:     
+ 23:     private async Task<Ticket> GetTicketOrThrow(
+ 24:         int id,
+ 25:         bool includeUser = false,
+ 26:         bool includeComments = false)
+ 27:     {
+ 28:         IQueryable<Ticket> query = Context.Tickets.AsQueryable();
+ 29: 
+ 30:         if (includeUser)
+ 31:         {
+ 32:             query = query.Include(t => t.User);
+ 33:         }
+ 34: 
+ 35:         if (includeComments)
+ 36:         {
+ 37:             query = query
+ 38:                 .Include(t => t.Comments)
+ 39:                 .ThenInclude(c => c.User);
+ 40:         }
+ 41: 
+ 42:         var ticket = await query.FirstOrDefaultAsync(t => t.Id == id);
+ 43: 
+ 44:         if (ticket == null)
+ 45:             throw new NotFoundException("Ticket not found.");
+ 46: 
+ 47:         return ticket;
+ 48:     }
+ 49: 
+ 50:     public async Task<PagedResponse<TicketListResponse>> GetAll(
+ 51:         TicketQueryRequest request)
+ 52:     {
+ 53:         var currentUser = await GetCurrentUser();
+ 54: 
+ 55:         IQueryable<Ticket> query = Context.Tickets;
+ 56: 
+ 57:         if (currentUser.Role != Role.Admin)
+ 58:         {
+ 59:             query = query.Where(t => t.UserId == currentUser.Id);
+ 60:         }
+ 61: 
+ 62:         if (!string.IsNullOrWhiteSpace(request.Search))
+ 63:         {
+ 64:             var keyword = request.Search.Trim();
+ 65: 
+ 66:             query = query.Where(t =>
+ 67:                 EF.Functions.ILike(t.Title, $"%{keyword}%") ||
+ 68:                 EF.Functions.ILike(t.Description, $"%{keyword}%"));
+ 69:         }
+ 70: 
+ 71:         if (request.Status.HasValue)
+ 72:         {
+ 73:             query = query.Where(t =>
+ 74:                 t.Status == request.Status.Value);
+ 75:         }
+ 76: 
+ 77:         if (request.Priority.HasValue)
+ 78:         {
+ 79:             query = query.Where(t =>
+ 80:                 t.Priority == request.Priority.Value);
+ 81:         }
+ 82: 
+ 83:         query = request.SortBy switch
+ 84:         {
+ 85:             TicketSortBy.Title => request.Descending
+ 86:                 ? query.OrderByDescending(t => t.Title)
+ 87:                 : query.OrderBy(t => t.Title),
+ 88: 
+ 89:             TicketSortBy.Priority => request.Descending
+ 90:                 ? query.OrderByDescending(t => t.Priority)
+ 91:                 : query.OrderBy(t => t.Priority),
+ 92: 
+ 93:             TicketSortBy.Status => request.Descending
+ 94:                 ? query.OrderByDescending(t => t.Status)
+ 95:                 : query.OrderBy(t => t.Status),
+ 96: 
+ 97:             TicketSortBy.CreatedAt => request.Descending
+ 98:                 ? query.OrderByDescending(t => t.CreatedAt)
+ 99:                 : query.OrderBy(t => t.CreatedAt),
+100: 
+101:             _ => request.Descending
+102:                 ? query.OrderByDescending(t => t.CreatedAt)
+103:                 : query.OrderBy(t => t.CreatedAt)
+104:         };
+105: 
+106:         var totalItems = await query.CountAsync();
+107: 
+108:         var tickets = await query
+109:             .ApplyPagination(
+110:                 request.Page,
+111:                 request.PageSize)
+112:             .Select(t => new TicketListResponse
+113:             {
+114:                 Id = t.Id,
+115:                 Title = t.Title,
+116:                 Status = t.Status.ToString(),
+117:                 Priority = t.Priority.ToString(),
+118:                 UserId = t.UserId,
+119:                 UserName = t.User.Name
+120:             })
+121:             .ToListAsync();
+122: 
+123:         var totalPages = (int)Math.Ceiling(
+124:             (double)totalItems / request.PageSize);
+125: 
+126:         return new PagedResponse<TicketListResponse>
+127:         {
+128:             Items = tickets,
+129:             Page = request.Page,
+130:             PageSize = request.PageSize,
+131:             TotalItems = totalItems,
+132:             TotalPages = totalPages
+133:         };
+134:     }
+135: 
+136:     public async Task<TicketDetailResponse> GetById(int id)
+137:     {
+138:         var ticket = await GetTicketOrThrow(
+139:             id,
+140:             includeUser: true,
+141:             includeComments: true);
+142: 
+143:         var currentUser = await GetCurrentUser();
+144: 
+145:         AuthorizationHelper.EnsureOwnerOrAdmin(
+146:             ticket.UserId,
+147:             currentUser);
+148: 
+149:         return TicketMapper.ToDetailResponse(ticket);
+150:     }
+151: 
+152:     public async Task<TicketDetailResponse> Create(CreateMyTicketRequest request)
+153:     {
+154:         var currentUser = await GetCurrentUser();
+155: 
+156:         var ticket = new Ticket
+157:         {
+158:             Title = request.Title.Trim(),
+159:             Description = request.Description.Trim(),
+160:             
+161:             UserId = currentUser.Id,
+162:             User = currentUser,
+163: 
+164:             Priority = TicketPriority.Medium,
+165:             Status = TicketStatus.Open,
+166:         };
+167: 
+168:         Context.Tickets.Add(ticket);
+169: 
+170:         await Context.SaveChangesAsync();
+171: 
+172:         return TicketMapper.ToDetailResponse(ticket);
+173:     }
+174: 
+175:     public async Task<TicketDetailResponse> UpdateMyTicket(
+176:         int id,
+177:         UpdateMyTicketRequest request)
+178:     {
+179:         var ticket = await GetTicketOrThrow(
+180:             id,
+181:             includeUser: true);
+182: 
+183:         var currentUser = await GetCurrentUser();
+184: 
+185:         AuthorizationHelper.EnsureOwnerOrAdmin(
+186:             ticket.UserId,
+187:             currentUser);
+188: 
+189:         ticket.Title = request.Title.Trim();
+190:         ticket.Description = request.Description.Trim();
+191: 
+192:         await Context.SaveChangesAsync();
+193: 
+194:         return TicketMapper.ToDetailResponse(ticket);
+195:     }
+196: 
+197:     public async Task<TicketDetailResponse> UpdateTicketAdmin(
+198:         int id,
+199:         UpdateTicketAdminRequest request)
+200:     {
+201:         var ticket = await GetTicketOrThrow(
+202:             id,
+203:             includeUser: true);
+204: 
+205:         var currentUser = await GetCurrentUser();
+206: 
+207:         AuthorizationHelper.EnsureAdmin(currentUser);
+208: 
+209:         ticket.Priority = request.Priority!.Value;
+210:         ticket.Status = request.Status!.Value;
+211: 
+212:         await Context.SaveChangesAsync();
+213: 
+214:         return TicketMapper.ToDetailResponse(ticket);
+215:     }
+216: 
+217:     public async Task Delete(int id)
+218:     {
+219:         var ticket = await GetTicketOrThrow(id);
+220: 
+221:         var currentUser = await GetCurrentUser();
+222: 
+223:         AuthorizationHelper.EnsureOwnerOrAdmin(
+224:             ticket.UserId,
+225:             currentUser);
+226: 
+227:         ticket.DeletedAt = DateTime.UtcNow;
+228: 
+229:         await Context.SaveChangesAsync();
+230:     }
+231: }
+</file>
+
+<file path="Services/UserService.cs">
+  1: using Helpdesk.Services.Base;
+  2: using Helpdesk.Data;
+  3: using Helpdesk.Extensions;
+  4: using Helpdesk.Dtos.User;
+  5: using Helpdesk.Dtos.Common;
+  6: using Helpdesk.Exceptions;
+  7: using Helpdesk.Mappers;
+  8: using Helpdesk.Models;
+  9: using BCrypt.Net;
+ 10: using Microsoft.EntityFrameworkCore;
+ 11: 
+ 12: namespace Helpdesk.Services;
+ 13: 
+ 14: public class UserService : BaseService
+ 15: {
+ 16:     public UserService(
+ 17:         AppDbContext context,
+ 18:         CurrentUserService currentUserService)
+ 19:         : base(context, currentUserService)
+ 20:     {
+ 21:     }
+ 22: 
+ 23:     private async Task<User> GetUserOrThrow(int id)
+ 24:     {
+ 25:         var user = await Context.Users
+ 26:             .FirstOrDefaultAsync(u => u.Id == id);
+ 27: 
+ 28:         if (user == null)
+ 29:             throw new NotFoundException("User not found.");
+ 30: 
+ 31:         return user;
+ 32:     }
+ 33: 
+ 34:     private async Task EnsureEmailUnique(string email, int? ignoreUserId = null)
+ 35:     {
+ 36:         var exists = await Context.Users.AnyAsync(u =>
+ 37:             u.Email == email &&
+ 38:             (ignoreUserId == null || u.Id != ignoreUserId));
+ 39: 
+ 40:         if (exists)
+ 41:             throw new ConflictException("Email already exists.");
+ 42:     }
+ 43: 
+ 44:     // =========================
+ 45:     // Admin
+ 46:     // =========================
+ 47: 
+ 48:     public async Task<PagedResponse<UserResponse>> GetAll(
+ 49:         UserQueryRequest request)
+ 50:     {
+ 51:         IQueryable<User> query = Context.Users;
+ 52: 
+ 53:         if (!string.IsNullOrWhiteSpace(request.Search))
+ 54:         {
+ 55:             var keyword = request.Search.Trim();
+ 56: 
+ 57:             query = query.Where(u =>
+ 58:                 EF.Functions.ILike(u.Name, $"%{keyword}%") ||
+ 59:                 EF.Functions.ILike(u.Email, $"%{keyword}%"));
+ 60:         }
+ 61: 
+ 62:         if (request.Role.HasValue)
+ 63:         {
+ 64:             query = query.Where(u =>
+ 65:                 u.Role == request.Role.Value);
+ 66:         }
+ 67: 
+ 68:         if (request.Status.HasValue)
+ 69:         {
+ 70:             query = query.Where(u =>
+ 71:                 u.Status == request.Status.Value);
+ 72:         }
+ 73: 
+ 74:         query = request.SortBy switch
+ 75:         {
+ 76:             UserSortBy.Name => request.Descending
+ 77:                 ? query.OrderByDescending(u => u.Name)
+ 78:                 : query.OrderBy(u => u.Name),
+ 79: 
+ 80:             UserSortBy.Email => request.Descending
+ 81:                 ? query.OrderByDescending(u => u.Email)
+ 82:                 : query.OrderBy(u => u.Email),
+ 83: 
+ 84:             UserSortBy.Role => request.Descending
+ 85:                 ? query.OrderByDescending(u => u.Role)
+ 86:                 : query.OrderBy(u => u.Role),
+ 87: 
+ 88:             UserSortBy.Status => request.Descending
+ 89:                 ? query.OrderByDescending(u => u.Status)
+ 90:                 : query.OrderBy(u => u.Status),
+ 91: 
+ 92:             UserSortBy.CreatedAt => request.Descending
+ 93:                 ? query.OrderByDescending(u => u.CreatedAt)
+ 94:                 : query.OrderBy(u => u.CreatedAt),
+ 95: 
+ 96:             _ => request.Descending
+ 97:                 ? query.OrderByDescending(u => u.CreatedAt)
+ 98:                 : query.OrderBy(u => u.CreatedAt)
+ 99:         };
+100: 
+101:         var totalItems = await query.CountAsync();
+102: 
+103:         var users = await query
+104:             .ApplyPagination(
+105:                 request.Page,
+106:                 request.PageSize)
+107:             .Select(u => new UserResponse
+108:             {
+109:                 Id = u.Id,
+110:                 Name = u.Name,
+111:                 Email = u.Email,
+112:                 Role = u.Role.ToString(),
+113:                 Status = u.Status.ToString(),
+114:             })
+115:             .ToListAsync();
+116: 
+117:         var totalPages = (int)Math.Ceiling(
+118:             (double)totalItems / request.PageSize);
+119: 
+120:         return new PagedResponse<UserResponse>
+121:         {
+122:             Items = users,
+123:             Page = request.Page,
+124:             PageSize = request.PageSize,
+125:             TotalItems = totalItems,
+126:             TotalPages = totalPages
+127:         };
+128:     }
+129: 
+130:     public async Task<UserResponse> GetById(int id)
+131:     {
+132:         var user = await GetUserOrThrow(id);
+133: 
+134:         return UserMapper.ToUserResponse(user);
+135:     }
+136: 
+137:     public async Task<UserResponse> Create(CreateUserRequest request)
+138:     {
+139:         var email = request.Email.Trim().ToLower();
+140: 
+141:         await EnsureEmailUnique(email);
+142: 
+143:         var user = new User
+144:         {
+145:             Name = request.Name.Trim(),
+146:             Email = request.Email.Trim().ToLower(),
+147:             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+148:         };
+149: 
+150:         Context.Users.Add(user);
+151: 
+152:         await Context.SaveChangesAsync();
+153: 
+154:         return UserMapper.ToUserResponse(user);
+155:     }
+156: 
+157:     public async Task<UserResponse> Update(int id, UpdateUserRequest request)
+158:     {
+159:         var user = await GetUserOrThrow(id);
+160: 
+161:         user.Role = request.Role!.Value;
+162:         user.Status = request.Status!.Value;
+163: 
+164:         await Context.SaveChangesAsync();
+165: 
+166:         return UserMapper.ToUserResponse(user);
+167:     }
+168: 
+169:     public async Task Delete(int id)
+170:     {
+171:         var currentUser = await GetCurrentUser();
+172: 
+173:         if (currentUser.Id == id)
+174:             throw new ForbiddenException("You cannot delete your own account.");
+175: 
+176:         var user = await GetUserOrThrow(id);
+177: 
+178:         user.DeletedAt = DateTime.UtcNow;
+179: 
+180:         await Context.SaveChangesAsync();
+181:     }
+182: 
+183:     // =========================
+184:     // Current User
+185:     // =========================
+186: 
+187:     public async Task<UserResponse> GetCurrentProfile()
+188:     {
+189:         var currentUser = await GetCurrentUser();
+190: 
+191:         return UserMapper.ToUserResponse(currentUser);
+192:     }
+193: 
+194:     public async Task<UserResponse> UpdateProfile(UpdateProfileRequest request)
+195:     {
+196:         var currentUser = await GetCurrentUser();
+197: 
+198:         var email = request.Email.Trim().ToLower();
+199: 
+200:         await EnsureEmailUnique(
+201:             email,
+202:             currentUser.Id);
+203: 
+204:         currentUser.Name = request.Name.Trim();
+205:         currentUser.Email = email;
+206: 
+207:         if (!string.IsNullOrWhiteSpace(request.Password))
+208:         {
+209:             currentUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+210:         }
+211: 
+212:         await Context.SaveChangesAsync();
+213: 
+214:         return UserMapper.ToUserResponse(currentUser);
+215:     }
+216: }
+</file>
+
+<file path=".repomixignore">
+ 1: bin/
+ 2: obj/
+ 3: .vs/
+ 4: 
+ 5: node_modules/
+ 6: 
+ 7: .git/
+ 8: 
+ 9: packages/
+10: 
+11: TestResults/
+12: 
+13: coverage/
+14: 
+15: artifacts/
+16: 
+17: publish/
+18: 
+19: wwwroot/lib/
+20: 
+21: *.user
+22: *.suo
+23: *.cache
+24: *.log
+25: 
+26: *.png
+27: *.jpg
+28: *.jpeg
+29: *.gif
+30: *.ico
+31: *.pdf
+32: *.zip
+33: 
+34: *.dll
+35: *.exe
+36: *.pdb
+37: 
+38: appsettings.Production.json
+39: appsettings.Staging.json
+40: appsettings.json
+41: 
+42: .env
+43: .env.*
+44: 
+45: *.db
+46: *.sqlite
+</file>
+
+<file path="Helpdesk.Api.csproj">
+ 1: <Project Sdk="Microsoft.NET.Sdk.Web">
+ 2: 
+ 3:   <PropertyGroup>
+ 4:     <TargetFramework>net10.0</TargetFramework>
+ 5:     <Nullable>enable</Nullable>
+ 6:     <ImplicitUsings>enable</ImplicitUsings>
+ 7:     <RootNamespace>Helpdesk</RootNamespace>
+ 8:   </PropertyGroup>
+ 9: 
+10:   <ItemGroup>
+11:     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+12:     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
+13:     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10">
+14:       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+15:       <PrivateAssets>all</PrivateAssets>
+16:     </PackageReference>
+17:     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+18:     <PackageReference Include="Scalar.AspNetCore" Version="2.16.16" />
+19:     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+20:   </ItemGroup>
+21: 
+22: </Project>
+</file>
+
+<file path="Helpdesk.Api.http">
+1: @Helpdesk.Api_HostAddress = http://localhost:5109
+2: 
+3: GET {{Helpdesk.Api_HostAddress}}/weatherforecast/
+4: Accept: application/json
+5: 
+6: ###
+</file>
+
+<file path="Program.cs">
+  1: using Scalar.AspNetCore;
+  2: using System.Text;
+  3: using Helpdesk;
+  4: using Helpdesk.Services;
+  5: using Helpdesk.Data;
+  6: using Helpdesk.Middleware;
+  7: using Helpdesk.Filters;
+  8: using Microsoft.AspNetCore.Mvc;
+  9: using Microsoft.EntityFrameworkCore;
+ 10: using Microsoft.AspNetCore.Authentication.JwtBearer;
+ 11: using Microsoft.IdentityModel.Tokens;
+ 12: using Microsoft.OpenApi;
+ 13: 
+ 14: var builder = WebApplication.CreateBuilder(args);
+ 15: 
+ 16: builder.Services.Configure<ApiBehaviorOptions>(options =>
+ 17: {
+ 18:     options.SuppressModelStateInvalidFilter = true;
+ 19: });
+ 20: 
+ 21: builder.Services.AddControllers(options =>
+ 22: {
+ 23:     options.Filters.Add<ValidationFilter>();
+ 24: });
+ 25: 
+ 26: builder.Services.AddEndpointsApiExplorer();
+ 27: 
+ 28: builder.Services.AddSwaggerGen(options =>
+ 29: {
+ 30:     options.SwaggerDoc("v1", new OpenApiInfo
+ 31:     {
+ 32:         Title = "Helpdesk API",
+ 33:         Version = "v1"
+ 34:     });
+ 35: 
+ 36:     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+ 37:     {
+ 38:         Name = "Authorization",
+ 39:         Type = SecuritySchemeType.Http,
+ 40:         Scheme = "bearer",
+ 41:         BearerFormat = "JWT",
+ 42:         In = ParameterLocation.Header,
+ 43:         Description = "Masukkan JWT tanpa kata Bearer."
+ 44:     });
+ 45: 
+ 46:     options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+ 47:     {
+ 48:         [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
+ 49:     });
+ 50: });
+ 51: 
+ 52: builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+ 53:     .AddJwtBearer(options =>
+ 54:     {
+ 55:         options.TokenValidationParameters = new TokenValidationParameters
+ 56:         {
+ 57:             ValidateIssuer = true,
+ 58:             ValidateAudience = true,
+ 59:             ValidateLifetime = true,
+ 60:             ValidateIssuerSigningKey = true,
+ 61: 
+ 62:             ValidIssuer = builder.Configuration["Jwt:Issuer"],
+ 63:             ValidAudience = builder.Configuration["Jwt:Audience"],
+ 64: 
+ 65:             IssuerSigningKey = new SymmetricSecurityKey(
+ 66:                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+ 67:         };
+ 68:     });
+ 69: 
+ 70: builder.Services.AddAuthorization();
+ 71: builder.Services.AddHttpContextAccessor();
+ 72: builder.Services.AddScoped<CurrentUserService>();
+ 73: builder.Services.AddScoped<AuthService>();
+ 74: builder.Services.AddScoped<JwtService>();
+ 75: builder.Services.AddScoped<UserService>();
+ 76: builder.Services.AddScoped<TicketService>();
+ 77: builder.Services.AddScoped<CommentService>();
+ 78: 
+ 79: builder.Services.AddDbContext<AppDbContext>(options =>
+ 80:     options.UseNpgsql(
+ 81:         builder.Configuration.GetConnectionString("DefaultConnection")));
+ 82: 
+ 83: var app = builder.Build();
+ 84: 
+ 85: if (app.Environment.IsDevelopment())
+ 86: {
+ 87:     app.UseSwagger();
+ 88: 
+ 89:     app.MapScalarApiReference(options =>
+ 90:     {
+ 91:         options
+ 92:             .WithTitle("Helpdesk API")
+ 93:             .WithOpenApiRoutePattern("/swagger/{documentName}/swagger.json");
+ 94:     });
+ 95: }
+ 96: 
+ 97: using (var scope = app.Services.CreateScope())
+ 98: {
+ 99:     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+100: 
+101:     await db.Database.MigrateAsync();
+102:     await DataSeeder.SeedAdminAsync(db);
+103: };
+104: 
+105: app.UseExceptionMiddleware();
+106: 
+107: app.UseAuthentication();
+108: app.UseAuthorization();
+109: 
+110: app.MapControllers();
+111: 
+112: app.Run();
+</file>
+
+<file path="repomix.config.json">
+ 1: {
+ 2:   "$schema": "https://repomix.com/schemas/latest/schema.json",
+ 3:   "input": {
+ 4:     "maxFileSize": 52428800
+ 5:   },
+ 6:   "output": {
+ 7:     "filePath": "repomix-output.xml",
+ 8:     "style": "xml",
+ 9: 
+10:     "filePathStyle": "target-relative",
+11: 
+12:     "fileSummary": true,
+13:     "directoryStructure": true,
+14:     "files": true,
+15: 
+16:     "removeComments": false,
+17:     "removeEmptyLines": false,
+18: 
+19:     "compress": false,
+20: 
+21:     "topFilesLength": 10,
+22: 
+23:     "showLineNumbers": true,
+24: 
+25:     "copyToClipboard": false
+26:   },
+27: 
+28:   "ignore": {
+29:     "useGitignore": true,
+30:     "useDotIgnore": true,
+31:     "useDefaultPatterns": true,
+32:     "customPatterns": []
+33:   },
+34: 
+35:   "security": {
+36:     "enableSecurityCheck": true
+37:   },
+38: 
+39:   "tokenCount": {
+40:     "encoding": "o200k_base"
+41:   }
+42: }
+</file>
+
+</files>

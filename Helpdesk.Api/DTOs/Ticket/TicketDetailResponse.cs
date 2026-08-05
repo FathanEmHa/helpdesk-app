@@ -20,5 +20,7 @@ public class TicketDetailResponse
 
     public DateTime CreatedAt { get; set; }
 
+    public DateTime? UpdatedAt { get; set; }
+
     public List<CommentResponse> Comments { get; set; } = [];
 }
