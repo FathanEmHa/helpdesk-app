@@ -22,10 +22,13 @@ public class TicketService : BaseService
     
     private async Task<Ticket> GetTicketOrThrow(
         int id,
+        bool tracking = true,
         bool includeUser = false,
         bool includeComments = false)
     {
-        IQueryable<Ticket> query = Context.Tickets.AsQueryable();
+        IQueryable<Ticket> query = tracking
+            ? Context.Tickets
+            : Context.Tickets.AsNoTracking();
 
         if (includeUser)
         {
@@ -52,7 +55,7 @@ public class TicketService : BaseService
     {
         var currentUser = await GetCurrentUser();
 
-        IQueryable<Ticket> query = Context.Tickets;
+        IQueryable<Ticket> query = Context.Tickets.AsNoTracking();
 
         if (currentUser.Role != Role.Admin)
         {
@@ -137,6 +140,7 @@ public class TicketService : BaseService
     {
         var ticket = await GetTicketOrThrow(
             id,
+            tracking: false,
             includeUser: true,
             includeComments: true);
 

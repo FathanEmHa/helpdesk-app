@@ -18,9 +18,15 @@ public class CommentService : BaseService
     {
     }
     
-    private async Task<Ticket> GetTicketOrThrow(int id)
+    private async Task<Ticket> GetTicketOrThrow(
+        int id,
+        bool tracking = true)
     {
-        var ticket = await Context.Tickets
+        IQueryable<Ticket> query = tracking
+            ? Context.Tickets
+            : Context.Tickets.AsNoTracking();
+
+        var ticket = await query
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (ticket == null)
@@ -31,9 +37,12 @@ public class CommentService : BaseService
 
     private async Task<Comment> GetCommentOrThrow(
         int id,
+        bool tracking = true,
         bool includeUser = false)
     {
-        IQueryable<Comment> query = Context.Comments.AsQueryable();
+        IQueryable<Comment> query = tracking
+            ? Context.Comments
+            : Context.Comments.AsNoTracking();
 
         if (includeUser)
         {
@@ -51,7 +60,9 @@ public class CommentService : BaseService
 
     public async Task<List<CommentResponse>> GetByTicketId(int ticketId)
     {
-        var ticket = await GetTicketOrThrow(ticketId);
+        var ticket = await GetTicketOrThrow(
+            ticketId,
+            tracking: false);
 
         var currentUser = await GetCurrentUser();
 
@@ -60,6 +71,7 @@ public class CommentService : BaseService
             currentUser);
 
         return await Context.Comments
+            .AsNoTracking()
             .Where(c => c.TicketId == ticketId)
             .OrderBy(c => c.CreatedAt)
             .Select(c => new CommentResponse
@@ -70,7 +82,8 @@ public class CommentService : BaseService
                 UserId = c.UserId,
                 UserName = c.User.Name,
                 CreatedAt = c.CreatedAt,
-                UpdatedAt = c.UpdatedAt
+                UpdatedAt = c.UpdatedAt,
+                Version = c.Version
             })
             .ToListAsync();
     }
@@ -138,6 +151,7 @@ public class CommentService : BaseService
             currentUser);
 
         comment.DeletedAt = DateTime.UtcNow;
+        comment.DeletedBy = CurrentUserId;
 
         await Context.SaveChangesAsync();
     }

@@ -20,10 +20,15 @@ public class UserService : BaseService
     {
     }
 
-    private async Task<User> GetUserOrThrow(int id)
+    private async Task<User> GetUserOrThrow(
+        int id,
+        bool tracking = true)
     {
-        var user = await Context.Users
-            .FirstOrDefaultAsync(u => u.Id == id);
+        IQueryable<User> query = tracking
+            ? Context.Users
+            : Context.Users.AsNoTracking();
+
+        var user = await query.FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
             throw new NotFoundException("User not found.");
@@ -41,25 +46,6 @@ public class UserService : BaseService
             throw new ConflictException("Email already exists.");
     }
 
-    private IQueryable<User> Users(bool tracking = true)
-    {
-        return tracking
-            ? Context.Users
-            : Context.Users.AsNoTracking();
-    }
-
-    private async Task<User> GetUserReadOnlyOrThrow(int id)
-    {
-        var user = await Context.Users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == id);
-
-        if (user == null)
-            throw new NotFoundException("User not found.");
-
-        return user;
-    }
-
     // =========================
     // Admin
     // =========================
@@ -67,7 +53,7 @@ public class UserService : BaseService
     public async Task<PagedResponse<UserResponse>> GetAll(
         UserQueryRequest request)
     {
-        IQueryable<User> query = Users(false);
+        IQueryable<User> query = Context.Users.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
@@ -148,7 +134,9 @@ public class UserService : BaseService
 
     public async Task<UserResponse> GetById(int id)
     {
-        var user = await GetUserReadOnlyOrThrow(id);
+        var user = await GetUserOrThrow(
+            id,
+            tracking: false);
 
         return UserMapper.ToUserResponse(user);
     }
@@ -208,14 +196,14 @@ public class UserService : BaseService
 
     public async Task<UserResponse> GetCurrentProfile()
     {
-        var currentUser = await GetCurrentUser();
+        var currentUser = await CurrentUserService.GetReadOnlyAsync();
 
         return UserMapper.ToUserResponse(currentUser);
     }
 
     public async Task<UserResponse> UpdateProfile(UpdateProfileRequest request)
     {
-        var currentUser = await CurrentUserService.GetReadOnlyAsync();
+        var currentUser = await GetCurrentUser();
 
         Context.Entry(currentUser)
             .Property(u => u.Version)
