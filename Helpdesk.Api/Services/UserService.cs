@@ -41,6 +41,25 @@ public class UserService : BaseService
             throw new ConflictException("Email already exists.");
     }
 
+    private IQueryable<User> Users(bool tracking = true)
+    {
+        return tracking
+            ? Context.Users
+            : Context.Users.AsNoTracking();
+    }
+
+    private async Task<User> GetUserReadOnlyOrThrow(int id)
+    {
+        var user = await Context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null)
+            throw new NotFoundException("User not found.");
+
+        return user;
+    }
+
     // =========================
     // Admin
     // =========================
@@ -48,7 +67,7 @@ public class UserService : BaseService
     public async Task<PagedResponse<UserResponse>> GetAll(
         UserQueryRequest request)
     {
-        IQueryable<User> query = Context.Users;
+        IQueryable<User> query = Users(false);
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
@@ -129,7 +148,7 @@ public class UserService : BaseService
 
     public async Task<UserResponse> GetById(int id)
     {
-        var user = await GetUserOrThrow(id);
+        var user = await GetUserReadOnlyOrThrow(id);
 
         return UserMapper.ToUserResponse(user);
     }
@@ -196,7 +215,7 @@ public class UserService : BaseService
 
     public async Task<UserResponse> UpdateProfile(UpdateProfileRequest request)
     {
-        var currentUser = await GetCurrentUser();
+        var currentUser = await CurrentUserService.GetReadOnlyAsync();
 
         Context.Entry(currentUser)
             .Property(u => u.Version)

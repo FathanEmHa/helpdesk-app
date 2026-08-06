@@ -30,4 +30,19 @@ public class CurrentUserService
 
         return user;
     }
+
+    public async Task<User> GetReadOnlyAsync()
+    {
+        if (UserId == null)
+            throw new UnauthorizedAccessException();
+
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == UserId.Value);
+
+        if (user == null)
+            throw new UnauthorizedAccessException();
+
+        return user;
+    }
 }
