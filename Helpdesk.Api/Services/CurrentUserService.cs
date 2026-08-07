@@ -36,14 +36,17 @@ public class CurrentUserService
         return user;
     }
 
-    public async Task<User> GetReadOnlyAsync()
+    public async Task<User> GetReadOnlyAsync(
+        CancellationToken cancellationToken = default)
     {
         if (UserId == null)
             throw new UnauthorizedAccessException();
 
         var user = await _context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == UserId.Value);
+            .FirstOrDefaultAsync(
+                u => u.Id == UserId.Value,
+                cancellationToken);
 
         if (user == null)
             throw new UnauthorizedAccessException();
