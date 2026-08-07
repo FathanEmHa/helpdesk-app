@@ -18,21 +18,33 @@ public class TicketsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] TicketQueryRequest request)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] TicketQueryRequest request,
+        CancellationToken cancellationToken)
     {
-        return Ok(await _ticketService.GetAll(request));
+        return Ok(await _ticketService.GetAll(
+            request,
+            cancellationToken));
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetById(
+        int id,
+        CancellationToken cancellationToken)
     {
-        return Ok(await _ticketService.GetById(id));
+        return Ok(await _ticketService.GetById(
+            id,
+            cancellationToken));
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(CreateMyTicketRequest request)
+    public async Task<IActionResult> Create(
+        CreateMyTicketRequest request,
+        CancellationToken cancellationToken)
     {
-        var ticket = await _ticketService.Create(request);
+        var ticket = await _ticketService.Create(
+            request,
+            cancellationToken);
 
         return CreatedAtAction(
             nameof(GetById),
@@ -41,15 +53,25 @@ public class TicketsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, UpdateMyTicketRequest request)
+    public async Task<IActionResult> Update(
+        int id,
+        UpdateMyTicketRequest request,
+        CancellationToken cancellationToken)
     {
-        return Ok(await _ticketService.UpdateMyTicket(id, request));
+        return Ok(await _ticketService.UpdateMyTicket(
+            id,
+            request,
+            cancellationToken));
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(
+        int id,
+        CancellationToken cancellationToken)
     {
-        await _ticketService.Delete(id);
+        await _ticketService.Delete(
+            id,
+            cancellationToken);
 
         return NoContent();
     }

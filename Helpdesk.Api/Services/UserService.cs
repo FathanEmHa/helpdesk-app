@@ -22,13 +22,16 @@ public class UserService : BaseService
 
     private async Task<User> GetUserOrThrow(
         int id,
-        bool tracking = true)
+        bool tracking = true,
+        CancellationToken cancellationToken = default)
     {
         IQueryable<User> query = tracking
             ? Context.Users
             : Context.Users.AsNoTracking();
 
-        var user = await query.FirstOrDefaultAsync(u => u.Id == id);
+        var user = await query.FirstOrDefaultAsync(
+            u => u.Id == id,
+            cancellationToken);
 
         if (user == null)
             throw new NotFoundException("User not found.");
@@ -36,11 +39,15 @@ public class UserService : BaseService
         return user;
     }
 
-    private async Task EnsureEmailUnique(string email, int? ignoreUserId = null)
+    private async Task EnsureEmailUnique(
+        string email,
+        int? ignoreUserId = null,
+        CancellationToken cancellationToken = default)
     {
-        var exists = await Context.Users.AnyAsync(u =>
-            u.Email == email &&
-            (ignoreUserId == null || u.Id != ignoreUserId));
+        var exists = await Context.Users.AnyAsync(
+            u => u.Email == email &&
+            (ignoreUserId == null || u.Id != ignoreUserId),
+            cancellationToken);
 
         if (exists)
             throw new ConflictException("Email already exists.");
@@ -51,7 +58,8 @@ public class UserService : BaseService
     // =========================
 
     public async Task<PagedResponse<UserResponse>> GetAll(
-        UserQueryRequest request)
+        UserQueryRequest request,
+        CancellationToken cancellationToken)
     {
         IQueryable<User> query = Context.Users.AsNoTracking();
 
@@ -103,7 +111,7 @@ public class UserService : BaseService
                 : query.OrderBy(u => u.CreatedAt)
         };
 
-        var totalItems = await query.CountAsync();
+        var totalItems = await query.CountAsync(cancellationToken);
 
         var users = await query
             .ApplyPagination(
@@ -117,7 +125,7 @@ public class UserService : BaseService
                 Role = u.Role.ToString(),
                 Status = u.Status.ToString(),
             })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         var totalPages = (int)Math.Ceiling(
             (double)totalItems / request.PageSize);
@@ -132,38 +140,50 @@ public class UserService : BaseService
         };
     }
 
-    public async Task<UserResponse> GetById(int id)
+    public async Task<UserResponse> GetById(
+        int id,
+        CancellationToken cancellationToken)
     {
         var user = await GetUserOrThrow(
             id,
-            tracking: false);
+            tracking: false,
+            cancellationToken: cancellationToken);
 
         return UserMapper.ToUserResponse(user);
     }
 
-    public async Task<UserResponse> Create(CreateUserRequest request)
+    public async Task<UserResponse> Create(
+        CreateUserRequest request,
+        CancellationToken cancellationToken)
     {
         var email = request.Email.Trim().ToLower();
 
-        await EnsureEmailUnique(email);
+        await EnsureEmailUnique(
+            email,
+            cancellationToken: cancellationToken);
 
         var user = new User
         {
             Name = request.Name.Trim(),
-            Email = request.Email.Trim().ToLower(),
+            Email = email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
         };
 
         Context.Users.Add(user);
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
 
         return UserMapper.ToUserResponse(user);
     }
 
-    public async Task<UserResponse> Update(int id, UpdateUserRequest request)
+    public async Task<UserResponse> Update(
+        int id,
+        UpdateUserRequest request,
+        CancellationToken cancellationToken)
     {
-        var user = await GetUserOrThrow(id);
+        var user = await GetUserOrThrow(
+            id,
+            cancellationToken: cancellationToken);
 
         Context.Entry(user)
             .Property(u => u.Version)
@@ -172,38 +192,46 @@ public class UserService : BaseService
         user.Role = request.Role!.Value;
         user.Status = request.Status!.Value;
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
 
         return UserMapper.ToUserResponse(user);
     }
 
-    public async Task Delete(int id)
+    public async Task Delete(
+        int id,
+        CancellationToken cancellationToken)
     {
         if (CurrentUserId == id)
             throw new ForbiddenException("You cannot delete your own account.");
 
-        var user = await GetUserOrThrow(id);
+        var user = await GetUserOrThrow(
+            id,
+            cancellationToken: cancellationToken);
 
         user.DeletedAt = DateTime.UtcNow;
         user.DeletedBy = CurrentUserId;
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
     }
 
     // =========================
     // Current User
     // =========================
 
-    public async Task<UserResponse> GetCurrentProfile()
+    public async Task<UserResponse> GetCurrentProfile(
+        CancellationToken cancellationToken)
     {
-        var currentUser = await CurrentUserService.GetReadOnlyAsync();
+        var currentUser = await CurrentUserService.GetReadOnlyAsync(
+            cancellationToken);
 
         return UserMapper.ToUserResponse(currentUser);
     }
 
-    public async Task<UserResponse> UpdateProfile(UpdateProfileRequest request)
+    public async Task<UserResponse> UpdateProfile(
+        UpdateProfileRequest request,
+        CancellationToken cancellationToken)
     {
-        var currentUser = await GetCurrentUser();
+        var currentUser = await GetCurrentUser(cancellationToken);
 
         Context.Entry(currentUser)
             .Property(u => u.Version)
@@ -213,17 +241,19 @@ public class UserService : BaseService
 
         await EnsureEmailUnique(
             email,
-            currentUser.Id);
+            currentUser.Id,
+            cancellationToken);
 
         currentUser.Name = request.Name.Trim();
         currentUser.Email = email;
 
         if (!string.IsNullOrWhiteSpace(request.Password))
         {
-            currentUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            currentUser.PasswordHash =
+                BCrypt.Net.BCrypt.HashPassword(request.Password);
         }
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
 
         return UserMapper.ToUserResponse(currentUser);
     }

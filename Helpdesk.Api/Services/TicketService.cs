@@ -24,7 +24,8 @@ public class TicketService : BaseService
         int id,
         bool tracking = true,
         bool includeUser = false,
-        bool includeComments = false)
+        bool includeComments = false,
+        CancellationToken cancellationToken = default)
     {
         IQueryable<Ticket> query = tracking
             ? Context.Tickets
@@ -42,7 +43,9 @@ public class TicketService : BaseService
                 .ThenInclude(c => c.User);
         }
 
-        var ticket = await query.FirstOrDefaultAsync(t => t.Id == id);
+        var ticket = await query.FirstOrDefaultAsync(
+            t => t.Id == id,
+            cancellationToken);
 
         if (ticket == null)
             throw new NotFoundException("Ticket not found.");
@@ -51,9 +54,10 @@ public class TicketService : BaseService
     }
 
     public async Task<PagedResponse<TicketListResponse>> GetAll(
-        TicketQueryRequest request)
+        TicketQueryRequest request,
+        CancellationToken cancellationToken)
     {
-        var currentUser = await GetCurrentUser();
+        var currentUser = await GetCurrentUser(cancellationToken);
 
         IQueryable<Ticket> query = Context.Tickets.AsNoTracking();
 
@@ -106,7 +110,7 @@ public class TicketService : BaseService
                 : query.OrderBy(t => t.CreatedAt)
         };
 
-        var totalItems = await query.CountAsync();
+        var totalItems = await query.CountAsync(cancellationToken);
 
         var tickets = await query
             .ApplyPagination(
@@ -121,7 +125,7 @@ public class TicketService : BaseService
                 UserId = t.UserId,
                 UserName = t.User.Name
             })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         var totalPages = (int)Math.Ceiling(
             (double)totalItems / request.PageSize);
@@ -136,15 +140,18 @@ public class TicketService : BaseService
         };
     }
 
-    public async Task<TicketDetailResponse> GetById(int id)
+    public async Task<TicketDetailResponse> GetById(
+        int id,
+        CancellationToken cancellationToken)
     {
         var ticket = await GetTicketOrThrow(
             id,
             tracking: false,
             includeUser: true,
-            includeComments: true);
+            includeComments: true,
+            cancellationToken: cancellationToken);
 
-        var currentUser = await GetCurrentUser();
+        var currentUser = await GetCurrentUser(cancellationToken);
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,
@@ -153,7 +160,9 @@ public class TicketService : BaseService
         return TicketMapper.ToDetailResponse(ticket);
     }
 
-    public async Task<TicketDetailResponse> Create(CreateMyTicketRequest request)
+    public async Task<TicketDetailResponse> Create(
+        CreateMyTicketRequest request,
+        CancellationToken cancellationToken)
     {
         var ticket = new Ticket
         {
@@ -168,20 +177,24 @@ public class TicketService : BaseService
 
         Context.Tickets.Add(ticket);
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
 
-        return await GetById(ticket.Id);
+        return await GetById(
+            ticket.Id,
+            cancellationToken);
     }
 
     public async Task<TicketDetailResponse> UpdateMyTicket(
         int id,
-        UpdateMyTicketRequest request)
+        UpdateMyTicketRequest request,
+        CancellationToken cancellationToken)
     {
         var ticket = await GetTicketOrThrow(
             id,
-            includeUser: true);
+            includeUser: true,
+            cancellationToken: cancellationToken);
 
-        var currentUser = await GetCurrentUser();
+        var currentUser = await GetCurrentUser(cancellationToken);
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,
@@ -194,20 +207,22 @@ public class TicketService : BaseService
         ticket.Title = request.Title.Trim();
         ticket.Description = request.Description.Trim();
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
 
         return TicketMapper.ToDetailResponse(ticket);
     }
 
     public async Task<TicketDetailResponse> UpdateTicketAdmin(
         int id,
-        UpdateTicketAdminRequest request)
+        UpdateTicketAdminRequest request,
+        CancellationToken cancellationToken)
     {
         var ticket = await GetTicketOrThrow(
             id,
-            includeUser: true);
+            includeUser: true,
+            cancellationToken: cancellationToken);
 
-        var currentUser = await GetCurrentUser();
+        var currentUser = await GetCurrentUser(cancellationToken);
 
         AuthorizationHelper.EnsureAdmin(currentUser);
 
@@ -218,16 +233,20 @@ public class TicketService : BaseService
         ticket.Priority = request.Priority!.Value;
         ticket.Status = request.Status!.Value;
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
 
         return TicketMapper.ToDetailResponse(ticket);
     }
 
-    public async Task Delete(int id)
+    public async Task Delete(
+        int id,
+        CancellationToken cancellationToken)
     {
-        var ticket = await GetTicketOrThrow(id);
+        var ticket = await GetTicketOrThrow(
+            id,
+            cancellationToken: cancellationToken);
 
-        var currentUser = await GetCurrentUser();
+        var currentUser = await GetCurrentUser(cancellationToken);
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,
@@ -236,6 +255,6 @@ public class TicketService : BaseService
         ticket.DeletedAt = DateTime.UtcNow;
         ticket.DeletedBy = CurrentUserId;
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
     }
 }

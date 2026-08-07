@@ -1,5 +1,6 @@
 using Helpdesk.Data;
 using Helpdesk.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;
 
@@ -18,12 +19,16 @@ public class CurrentUserService
 
     public int? UserId => _currentUserAccessor.UserId;
 
-    public async Task<User> GetAsync()
+    public async Task<User> GetAsync(
+        CancellationToken cancellationToken = default)
     {
         if (UserId == null)
             throw new UnauthorizedAccessException();
 
-        var user = await _context.Users.FindAsync(UserId.Value);
+        var user = await _context.Users
+            .FindAsync(
+                [UserId.Value],
+                cancellationToken);
 
         if (user == null)
             throw new UnauthorizedAccessException();

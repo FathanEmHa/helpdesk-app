@@ -20,14 +20,16 @@ public class CommentService : BaseService
     
     private async Task<Ticket> GetTicketOrThrow(
         int id,
-        bool tracking = true)
+        bool tracking = true,
+        CancellationToken cancellationToken = default)
     {
         IQueryable<Ticket> query = tracking
             ? Context.Tickets
             : Context.Tickets.AsNoTracking();
 
-        var ticket = await query
-            .FirstOrDefaultAsync(t => t.Id == id);
+        var ticket = await query.FirstOrDefaultAsync(
+            t => t.Id == id,
+            cancellationToken);
 
         if (ticket == null)
             throw new NotFoundException("Ticket not found.");
@@ -38,7 +40,8 @@ public class CommentService : BaseService
     private async Task<Comment> GetCommentOrThrow(
         int id,
         bool tracking = true,
-        bool includeUser = false)
+        bool includeUser = false,
+        CancellationToken cancellationToken = default)
     {
         IQueryable<Comment> query = tracking
             ? Context.Comments
@@ -49,8 +52,9 @@ public class CommentService : BaseService
             query = query.Include(c => c.User);
         }
 
-        var comment = await query
-            .FirstOrDefaultAsync(c => c.Id == id);
+        var comment = await query.FirstOrDefaultAsync(
+            c => c.Id == id,
+            cancellationToken);
 
         if (comment == null)
             throw new NotFoundException("Comment not found.");
@@ -58,13 +62,16 @@ public class CommentService : BaseService
         return comment;
     }
 
-    public async Task<List<CommentResponse>> GetByTicketId(int ticketId)
+    public async Task<List<CommentResponse>> GetByTicketId(
+        int ticketId,
+        CancellationToken cancellationToken)
     {
         var ticket = await GetTicketOrThrow(
             ticketId,
-            tracking: false);
+            tracking: false,
+            cancellationToken: cancellationToken);
 
-        var currentUser = await GetCurrentUser();
+        var currentUser = await GetCurrentUser(cancellationToken);
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,
@@ -85,16 +92,19 @@ public class CommentService : BaseService
                 UpdatedAt = c.UpdatedAt,
                 Version = c.Version
             })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<CommentResponse> Create(
         int ticketId,
-        CreateCommentRequest request)
+        CreateCommentRequest request,
+        CancellationToken cancellationToken)
     {
-        var ticket = await GetTicketOrThrow(ticketId);
+        var ticket = await GetTicketOrThrow(
+            ticketId,
+            cancellationToken: cancellationToken);
 
-        var currentUser = await GetCurrentUser();
+        var currentUser = await GetCurrentUser(cancellationToken);
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             ticket.UserId,
@@ -110,20 +120,22 @@ public class CommentService : BaseService
 
         Context.Comments.Add(comment);
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
 
         return CommentMapper.ToCommentResponse(comment);
     }
 
     public async Task<CommentResponse> Update(
         int id,
-        UpdateCommentRequest request)
+        UpdateCommentRequest request,
+        CancellationToken cancellationToken)
     {
         var comment = await GetCommentOrThrow(
             id,
-            includeUser: true);
+            includeUser: true,
+            cancellationToken: cancellationToken);
 
-        var currentUser = await GetCurrentUser();
+        var currentUser = await GetCurrentUser(cancellationToken);
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             comment.UserId,
@@ -135,16 +147,20 @@ public class CommentService : BaseService
 
         comment.Content = request.Content.Trim();
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
 
         return CommentMapper.ToCommentResponse(comment);
     }
 
-    public async Task Delete(int id)
+    public async Task Delete(
+        int id,
+        CancellationToken cancellationToken)
     {
-        var comment = await GetCommentOrThrow(id);
+        var comment = await GetCommentOrThrow(
+            id,
+            cancellationToken: cancellationToken);
 
-        var currentUser = await GetCurrentUser();
+        var currentUser = await GetCurrentUser(cancellationToken);
 
         AuthorizationHelper.EnsureOwnerOrAdmin(
             comment.UserId,
@@ -153,6 +169,6 @@ public class CommentService : BaseService
         comment.DeletedAt = DateTime.UtcNow;
         comment.DeletedBy = CurrentUserId;
 
-        await Context.SaveChangesAsync();
+        await Context.SaveChangesAsync(cancellationToken);
     }
 }

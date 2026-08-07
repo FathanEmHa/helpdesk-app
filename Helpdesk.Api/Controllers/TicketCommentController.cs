@@ -18,17 +18,25 @@ public class TicketCommentController : ControllerBase
     }
 
     [HttpGet("{ticketId}/comments")]
-    public async Task<IActionResult> GetByTicketId(int ticketId)
+    public async Task<IActionResult> GetByTicketId(
+        int ticketId,
+        CancellationToken cancellationToken)
     {
-        return Ok(await _commentService.GetByTicketId(ticketId));
+        return Ok(await _commentService.GetByTicketId(
+            ticketId,
+            cancellationToken));
     }
 
     [HttpPost("{ticketId}/comments")]
     public async Task<IActionResult> Create(
         int ticketId,
-        CreateCommentRequest request)
+        CreateCommentRequest request,
+        CancellationToken cancellationToken)
     {
-        var comment = await _commentService.Create(ticketId, request);
+        var comment = await _commentService.Create(
+            ticketId,
+            request,
+            cancellationToken);
 
         return CreatedAtAction(
             nameof(GetByTicketId),

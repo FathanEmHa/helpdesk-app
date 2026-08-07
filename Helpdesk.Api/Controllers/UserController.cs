@@ -22,23 +22,35 @@ public class UsersController : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] UserQueryRequest request)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] UserQueryRequest request,
+        CancellationToken cancellationToken)
     {
-        return Ok(await _userService.GetAll(request));
+        return Ok(await _userService.GetAll(
+            request,
+            cancellationToken));
     }
 
     [Authorize(Roles = "Admin")]
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetById(
+        int id,
+        CancellationToken cancellationToken)
     {
-        return Ok(await _userService.GetById(id));
+        return Ok(await _userService.GetById(
+            id,
+            cancellationToken));
     }
 
     [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<IActionResult> Create(CreateUserRequest request)
+    public async Task<IActionResult> Create(
+        CreateUserRequest request,
+        CancellationToken cancellationToken)
     {
-        var user = await _userService.Create(request);
+        var user = await _userService.Create(
+            request,
+            cancellationToken);
 
         return CreatedAtAction(
             nameof(GetById),
@@ -48,16 +60,26 @@ public class UsersController : ControllerBase
 
     [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, UpdateUserRequest request)
+    public async Task<IActionResult> Update(
+        int id,
+        UpdateUserRequest request,
+        CancellationToken cancellationToken)
     {
-        return Ok(await _userService.Update(id, request));
+        return Ok(await _userService.Update(
+            id,
+            request,
+            cancellationToken));
     }
 
     [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(
+        int id,
+        CancellationToken cancellationToken)
     {
-        await _userService.Delete(id);
+        await _userService.Delete(
+            id,
+            cancellationToken);
 
         return NoContent();
     }
@@ -68,15 +90,21 @@ public class UsersController : ControllerBase
 
     [Authorize]
     [HttpGet("me")]
-    public async Task<IActionResult> Me()
+    public async Task<IActionResult> Me(
+        CancellationToken cancellationToken)
     {
-        return Ok(await _userService.GetCurrentProfile());
+        return Ok(await _userService.GetCurrentProfile(
+            cancellationToken));
     }
 
     [Authorize]
     [HttpPut("me")]
-    public async Task<IActionResult> UpdateProfile(UpdateProfileRequest request)
+    public async Task<IActionResult> UpdateProfile(
+        UpdateProfileRequest request,
+        CancellationToken cancellationToken)
     {
-        return Ok(await _userService.UpdateProfile(request));
+        return Ok(await _userService.UpdateProfile(
+            request,
+            cancellationToken));
     }
 }

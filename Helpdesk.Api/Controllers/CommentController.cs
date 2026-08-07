@@ -20,15 +20,23 @@ public class CommentsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(
         int id,
-        UpdateCommentRequest request)
+        UpdateCommentRequest request,
+        CancellationToken cancellationToken)
     {
-        return Ok(await _commentService.Update(id, request));
+        return Ok(await _commentService.Update(
+            id,
+            request,
+            cancellationToken));
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(
+        int id,
+        CancellationToken cancellationToken)
     {
-        await _commentService.Delete(id);
+        await _commentService.Delete(
+            id,
+            cancellationToken);
 
         return NoContent();
     }

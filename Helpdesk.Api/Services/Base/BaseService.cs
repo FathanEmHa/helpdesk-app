@@ -19,6 +19,10 @@ public abstract class BaseService
         CurrentUserService = currentUserService;
     }
 
-    protected Task<User> GetCurrentUser()
-        => CurrentUserService.GetAsync();
+    protected Task<User> GetCurrentUser(
+        CancellationToken cancellationToken = default)
+    {
+        return CurrentUserService.GetAsync(
+            cancellationToken);
+    }
 }
