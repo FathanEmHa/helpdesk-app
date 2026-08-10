@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Helpdesk.Dtos.User;
 using Helpdesk.Models;
 
@@ -19,4 +20,18 @@ public static class UserMapper
             Version = user.Version
         };
     }
+
+    public static Expression<Func<User, UserResponse>>
+        ToUserResponseProjection =>
+        user => new UserResponse
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            Role = user.Role.ToString(),
+            Status = user.Status.ToString(),
+            CreatedAt = user.CreatedAt,
+            UpdatedAt = user.UpdatedAt,
+            Version = user.Version
+        };
 }

@@ -117,14 +117,7 @@ public class UserService : BaseService
             .ApplyPagination(
                 request.Page,
                 request.PageSize)
-            .Select(u => new UserResponse
-            {
-                Id = u.Id,
-                Name = u.Name,
-                Email = u.Email,
-                Role = u.Role.ToString(),
-                Status = u.Status.ToString(),
-            })
+            .Select(UserMapper.ToUserResponseProjection)
             .ToListAsync(cancellationToken);
 
         var totalPages = (int)Math.Ceiling(
@@ -144,12 +137,16 @@ public class UserService : BaseService
         int id,
         CancellationToken cancellationToken)
     {
-        var user = await GetUserOrThrow(
-            id,
-            tracking: false,
-            cancellationToken: cancellationToken);
+        var user = await Context.Users
+            .AsNoTracking()
+            .Where(u => u.Id == id)
+            .Select(UserMapper.ToUserResponseProjection)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        return UserMapper.ToUserResponse(user);
+        if (user == null)
+            throw new NotFoundException("User not found.");
+
+        return user;
     }
 
     public async Task<UserResponse> Create(
