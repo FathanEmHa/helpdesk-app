@@ -58,8 +58,24 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // =========================
+        // Enum To String
+        // =========================
+
         modelBuilder.Entity<User>()
-            .Property(u => u.Role)
+        .Property(u => u.Role)
+        .HasConversion<string>();
+
+        modelBuilder.Entity<User>()
+            .Property(u => u.Status)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<Ticket>()
+            .Property(t => t.Status)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<Ticket>()
+            .Property(t => t.Priority)
             .HasConversion<string>();
 
         // =========================
