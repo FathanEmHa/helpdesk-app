@@ -1,5 +1,6 @@
-using Scalar.AspNetCore;
+using System.Text.Json.Serialization;
 using System.Text;
+using Scalar.AspNetCore;
 using Helpdesk;
 using Helpdesk.Services;
 using Helpdesk.Data;
@@ -21,6 +22,11 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<ValidationFilter>();
+})
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(
+        new JsonStringEnumConverter());
 });
 
 builder.Services.AddEndpointsApiExplorer();
