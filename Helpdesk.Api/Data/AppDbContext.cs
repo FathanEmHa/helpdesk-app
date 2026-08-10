@@ -39,7 +39,6 @@ public class AppDbContext : DbContext
             {
                 case EntityState.Added:
 
-                    entry.Entity.CreatedAt = utcNow;
                     entry.Entity.CreatedBy = _currentUser.UserId;
 
                     break;
@@ -59,10 +58,13 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-
         modelBuilder.Entity<User>()
             .Property(u => u.Role)
             .HasConversion<string>();
+
+        // =========================
+        // Optimistic Concurrency
+        // =========================
 
         modelBuilder.Entity<User>()
             .Property(u => u.Version)
@@ -75,6 +77,26 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Comment>()
             .Property(c => c.Version)
             .IsRowVersion();
+
+        // =========================
+        // Audit Fields
+        // =========================
+
+        modelBuilder.Entity<User>()
+            .Property(u => u.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        modelBuilder.Entity<Ticket>()
+            .Property(t => t.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        modelBuilder.Entity<Comment>()
+            .Property(c => c.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        // =========================
+        // Soft Delete
+        // =========================
 
         modelBuilder.Entity<User>()
             .HasQueryFilter(u => u.DeletedAt == null);
