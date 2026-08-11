@@ -1,0 +1,26 @@
+.aider*
+
+# Build
+Helpdesk.Api/bin/
+Helpdesk.Api/obj/
+
+# Rider / VS
+.vs/
+.idea/
+
+# User files
+*.user
+*.suo
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+
+# App settings
+Helpdesk.Api/appsettings.json
+Helpdesk.Api/appsettings.Development.json
+Helpdesk.Api/appsettings.*.json
+!Helpdesk.Api/appsettings.Example.json
