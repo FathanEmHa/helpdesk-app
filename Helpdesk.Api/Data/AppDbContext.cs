@@ -79,6 +79,14 @@ public class AppDbContext : DbContext
             .HasConversion<string>();
 
         // =========================
+        // Unique Index
+        // =========================
+
+        modelBuilder.Entity<Ticket>()
+            .HasIndex(t => t.TicketNumber)
+            .IsUnique();
+
+        // =========================
         // Optimistic Concurrency
         // =========================
 

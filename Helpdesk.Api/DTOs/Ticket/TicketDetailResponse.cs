@@ -6,6 +6,8 @@ public class TicketDetailResponse
 {
     public int Id { get; set; }
 
+    public string TicketNumber { get; set; } = "";
+
     public string Title { get; set; } = "";
 
     public string Description { get; set; } = "";

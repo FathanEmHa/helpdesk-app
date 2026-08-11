@@ -12,6 +12,7 @@ public static class TicketMapper
         return new TicketDetailResponse
         {
             Id = ticket.Id,
+            TicketNumber = ticket.TicketNumber,
             Title = ticket.Title,
             Description = ticket.Description,
             Priority = ticket.Priority.ToString(),
@@ -35,11 +36,13 @@ public static class TicketMapper
         ticket => new TicketListResponse
         {
             Id = ticket.Id,
+            TicketNumber = ticket.TicketNumber,
             Title = ticket.Title,
             Status = ticket.Status.ToString(),
             Priority = ticket.Priority.ToString(),
             UserId = ticket.UserId,
-            UserName = ticket.User.Name
+            UserName = ticket.User.Name,
+            CommentCount = ticket.Comments.Count()
         };
 
     public static Expression<Func<Ticket, TicketDetailResponse>>
@@ -47,6 +50,7 @@ public static class TicketMapper
         ticket => new TicketDetailResponse
         {
             Id = ticket.Id,
+            TicketNumber = ticket.TicketNumber,
             Title = ticket.Title,
             Description = ticket.Description,
             Priority = ticket.Priority.ToString(),

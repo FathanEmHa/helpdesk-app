@@ -183,6 +183,12 @@ public class TicketService : BaseService
         await Context.SaveChangesAsync(
             cancellationToken);
 
+        ticket.TicketNumber =
+            $"TKT-{DateTime.UtcNow:yyyy}-{ticket.Id:D6}";
+
+        await Context.SaveChangesAsync(
+            cancellationToken);
+
         return await GetById(
             ticket.Id,
             cancellationToken);

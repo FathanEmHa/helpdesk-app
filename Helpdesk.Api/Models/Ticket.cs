@@ -4,6 +4,8 @@ namespace Helpdesk.Models;
 
 public class Ticket : SoftDeleteEntity
 {
+    public string TicketNumber { get; set; } = "";
+    
     public string Title { get; set; } = "";
 
     public string Description { get; set; } = "";

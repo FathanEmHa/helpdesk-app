@@ -4,6 +4,8 @@ public class TicketListResponse
 {
     public int Id { get; set; }
 
+    public string TicketNumber { get; set; } = "";
+
     public string Title { get; set; } = "";
 
     public string Status { get; set; } = "";
@@ -13,6 +15,8 @@ public class TicketListResponse
     public int UserId { get; set; }
 
     public string UserName { get; set; } = "";
+
+    public int CommentCount { get; set; }
 
     public DateTime CreatedAt { get; set; }
 }
