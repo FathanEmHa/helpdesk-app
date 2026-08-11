@@ -4,6 +4,7 @@ using Scalar.AspNetCore;
 using Helpdesk;
 using Helpdesk.Services;
 using Helpdesk.Data;
+using Helpdesk.Data.Interceptors;
 using Helpdesk.Middleware;
 using Helpdesk.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -112,9 +113,16 @@ builder.Services.AddScoped<TicketService>();
 builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<ActivityLogService>();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddScoped<AuditSaveChangesInterceptor>();
+
+builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+{
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+        builder.Configuration.GetConnectionString("DefaultConnection"));
+
+    options.AddInterceptors(
+        serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>());
+});
 
 var app = builder.Build();
 

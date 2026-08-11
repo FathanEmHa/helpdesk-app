@@ -7,55 +7,16 @@ namespace Helpdesk.Data;
 
 public class AppDbContext : DbContext
 {
-    private readonly ICurrentUserAccessor _currentUser;
-
     public AppDbContext(
-        DbContextOptions<AppDbContext> options,
-        ICurrentUserAccessor currentUser)
+        DbContextOptions<AppDbContext> options)
         : base(options)
     {
-        _currentUser = currentUser;
     }
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
-
-    public override async Task<int> SaveChangesAsync(
-        CancellationToken cancellationToken = default)
-    {
-        UpdateAuditFields();
-
-        return await base.SaveChangesAsync(cancellationToken);
-    }
-
-    private void UpdateAuditFields()
-    {
-        var utcNow = DateTime.UtcNow;
-
-        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
-        {
-            switch (entry.State)
-            {
-                case EntityState.Added:
-
-                    entry.Entity.CreatedBy = _currentUser.UserId;
-
-                    break;
-
-                case EntityState.Modified:
-
-                    entry.Property(e => e.CreatedAt).IsModified = false;
-                    entry.Property(e => e.CreatedBy).IsModified = false;
-
-                    entry.Entity.UpdatedAt = utcNow;
-                    entry.Entity.UpdatedBy = _currentUser.UserId;
-
-                    break;
-            }
-        }
-    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
