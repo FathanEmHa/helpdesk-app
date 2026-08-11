@@ -57,10 +57,6 @@ public class TicketService : BaseService
         return ticket;
     }
 
-    // =========================
-    // Read
-    // =========================
-
     public async Task<PagedResponse<TicketListResponse>> GetAll(
         TicketQueryRequest request,
         CancellationToken cancellationToken)
@@ -77,54 +73,9 @@ public class TicketService : BaseService
                 t.UserId == currentUser.Id);
         }
 
-        if (!string.IsNullOrWhiteSpace(request.Search))
-        {
-            var keyword = request.Search.Trim();
-
-            query = query.Where(t =>
-                EF.Functions.ILike(
-                    t.Title,
-                    $"%{keyword}%") ||
-
-                EF.Functions.ILike(
-                    t.Description,
-                    $"%{keyword}%"));
-        }
-
-        if (request.Status.HasValue)
-        {
-            query = query.Where(t =>
-                t.Status == request.Status.Value);
-        }
-
-        if (request.Priority.HasValue)
-        {
-            query = query.Where(t =>
-                t.Priority == request.Priority.Value);
-        }
-
-        query = request.SortBy switch
-        {
-            TicketSortBy.Title => request.Descending
-                ? query.OrderByDescending(t => t.Title)
-                : query.OrderBy(t => t.Title),
-
-            TicketSortBy.Priority => request.Descending
-                ? query.OrderByDescending(t => t.Priority)
-                : query.OrderBy(t => t.Priority),
-
-            TicketSortBy.Status => request.Descending
-                ? query.OrderByDescending(t => t.Status)
-                : query.OrderBy(t => t.Status),
-
-            TicketSortBy.CreatedAt => request.Descending
-                ? query.OrderByDescending(t => t.CreatedAt)
-                : query.OrderBy(t => t.CreatedAt),
-
-            _ => request.Descending
-                ? query.OrderByDescending(t => t.CreatedAt)
-                : query.OrderBy(t => t.CreatedAt)
-        };
+        query = query
+            .ApplyFilters(request)
+            .ApplySorting(request);
 
         var totalItems = await query.CountAsync(
             cancellationToken);
@@ -173,10 +124,6 @@ public class TicketService : BaseService
         return ticket;
     }
 
-    // =========================
-    // Create
-    // =========================
-
     public async Task<TicketDetailResponse> Create(
         CreateMyTicketRequest request,
         CancellationToken cancellationToken)
@@ -211,7 +158,6 @@ public class TicketService : BaseService
                 entityId: ticket.Id,
                 description: $"Created ticket {ticket.TicketNumber}");
 
-            // Save kedua menyimpan TicketNumber + ActivityLog.
             await Context.SaveChangesAsync(
                 cancellationToken);
 
@@ -230,10 +176,6 @@ public class TicketService : BaseService
             throw;
         }
     }
-
-    // =========================
-    // Update
-    // =========================
 
     public async Task<TicketDetailResponse> UpdateMyTicket(
         int id,
@@ -305,10 +247,6 @@ public class TicketService : BaseService
 
         return TicketMapper.ToDetailResponse(ticket);
     }
-
-    // =========================
-    // Delete
-    // =========================
 
     public async Task Delete(
         int id,

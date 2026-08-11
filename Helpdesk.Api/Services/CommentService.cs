@@ -66,10 +66,6 @@ public class CommentService : BaseService
         return comment;
     }
 
-    // =========================
-    // Read
-    // =========================
-
     public async Task<List<CommentResponse>> GetByTicketId(
         int ticketId,
         CancellationToken cancellationToken)
@@ -93,10 +89,6 @@ public class CommentService : BaseService
             .Select(CommentMapper.ToCommentResponseProjection)
             .ToListAsync(cancellationToken);
     }
-
-    // =========================
-    // Create
-    // =========================
 
     public async Task<CommentResponse> Create(
         int ticketId,
@@ -130,7 +122,6 @@ public class CommentService : BaseService
 
             Context.Comments.Add(comment);
 
-            // Generate Comment.Id
             await Context.SaveChangesAsync(
                 cancellationToken);
 
@@ -156,10 +147,6 @@ public class CommentService : BaseService
             throw;
         }
     }
-
-    // =========================
-    // Update
-    // =========================
 
     public async Task<CommentResponse> Update(
         int id,
@@ -195,10 +182,6 @@ public class CommentService : BaseService
 
         return CommentMapper.ToCommentResponse(comment);
     }
-
-    // =========================
-    // Delete
-    // =========================
 
     public async Task Delete(
         int id,
