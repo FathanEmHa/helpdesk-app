@@ -11,11 +11,15 @@ namespace Helpdesk.Services;
 
 public class CommentService : BaseService
 {
+    private readonly ActivityLogService _activityLogService;
+
     public CommentService(
         AppDbContext context,
-        CurrentUserService currentUserService)
+        CurrentUserService currentUserService,
+        ActivityLogService activityLogService)
         : base(context, currentUserService)
     {
+        _activityLogService = activityLogService;
     }
 
     private async Task<Ticket> GetTicketOrThrow(
@@ -99,31 +103,58 @@ public class CommentService : BaseService
         CreateCommentRequest request,
         CancellationToken cancellationToken)
     {
-        var ticket = await GetTicketOrThrow(
-            ticketId,
-            cancellationToken: cancellationToken);
+        await using var transaction =
+            await Context.Database.BeginTransactionAsync(
+                cancellationToken);
 
-        var currentUser = await GetCurrentUser(
-            cancellationToken);
-
-        AuthorizationHelper.EnsureOwnerOrAdmin(
-            ticket.UserId,
-            currentUser);
-
-        var comment = new Comment
+        try
         {
-            Content = request.Content.Trim(),
-            TicketId = ticketId,
-            UserId = currentUser.Id,
-            User = currentUser
-        };
+            var ticket = await GetTicketOrThrow(
+                ticketId,
+                cancellationToken: cancellationToken);
 
-        Context.Comments.Add(comment);
+            var currentUser = await GetCurrentUser(
+                cancellationToken);
 
-        await Context.SaveChangesAsync(
-            cancellationToken);
+            AuthorizationHelper.EnsureOwnerOrAdmin(
+                ticket.UserId,
+                currentUser);
 
-        return CommentMapper.ToCommentResponse(comment);
+            var comment = new Comment
+            {
+                Content = request.Content.Trim(),
+                TicketId = ticketId,
+                UserId = currentUser.Id,
+                User = currentUser
+            };
+
+            Context.Comments.Add(comment);
+
+            // Generate Comment.Id
+            await Context.SaveChangesAsync(
+                cancellationToken);
+
+            _activityLogService.Add(
+                action: "Create",
+                entityType: "Comment",
+                entityId: comment.Id,
+                description: $"Created comment on ticket {ticket.TicketNumber}");
+
+            await Context.SaveChangesAsync(
+                cancellationToken);
+
+            await transaction.CommitAsync(
+                cancellationToken);
+
+            return CommentMapper.ToCommentResponse(comment);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(
+                cancellationToken);
+
+            throw;
+        }
     }
 
     // =========================
@@ -153,6 +184,12 @@ public class CommentService : BaseService
 
         comment.Content = request.Content.Trim();
 
+        _activityLogService.Add(
+            action: "Update",
+            entityType: "Comment",
+            entityId: comment.Id,
+            description: $"Updated comment {comment.Id}");
+
         await Context.SaveChangesAsync(
             cancellationToken);
 
@@ -180,6 +217,12 @@ public class CommentService : BaseService
 
         comment.DeletedAt = DateTime.UtcNow;
         comment.DeletedBy = CurrentUserId;
+
+        _activityLogService.Add(
+            action: "Delete",
+            entityType: "Comment",
+            entityId: comment.Id,
+            description: $"Deleted comment {comment.Id}");
 
         await Context.SaveChangesAsync(
             cancellationToken);

@@ -13,11 +13,15 @@ namespace Helpdesk.Services;
 
 public class UserService : BaseService
 {
+    private readonly ActivityLogService _activityLogService;
+
     public UserService(
         AppDbContext context,
-        CurrentUserService currentUserService)
+        CurrentUserService currentUserService,
+        ActivityLogService activityLogService)
         : base(context, currentUserService)
     {
+        _activityLogService = activityLogService;
     }
 
     private async Task<User> GetUserOrThrow(
@@ -45,8 +49,9 @@ public class UserService : BaseService
         CancellationToken cancellationToken = default)
     {
         var exists = await Context.Users.AnyAsync(
-            u => u.Email == email &&
-            (ignoreUserId == null || u.Id != ignoreUserId),
+            u =>
+                u.Email == email &&
+                (ignoreUserId == null || u.Id != ignoreUserId),
             cancellationToken);
 
         if (exists)
@@ -61,15 +66,21 @@ public class UserService : BaseService
         UserQueryRequest request,
         CancellationToken cancellationToken)
     {
-        IQueryable<User> query = Context.Users.AsNoTracking();
+        IQueryable<User> query =
+            Context.Users.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var keyword = request.Search.Trim();
 
             query = query.Where(u =>
-                EF.Functions.ILike(u.Name, $"%{keyword}%") ||
-                EF.Functions.ILike(u.Email, $"%{keyword}%"));
+                EF.Functions.ILike(
+                    u.Name,
+                    $"%{keyword}%") ||
+
+                EF.Functions.ILike(
+                    u.Email,
+                    $"%{keyword}%"));
         }
 
         if (request.Role.HasValue)
@@ -111,7 +122,8 @@ public class UserService : BaseService
                 : query.OrderBy(u => u.CreatedAt)
         };
 
-        var totalItems = await query.CountAsync(cancellationToken);
+        var totalItems = await query.CountAsync(
+            cancellationToken);
 
         var users = await query
             .ApplyPagination(
@@ -121,7 +133,8 @@ public class UserService : BaseService
             .ToListAsync(cancellationToken);
 
         var totalPages = (int)Math.Ceiling(
-            (double)totalItems / request.PageSize);
+            (double)totalItems /
+            request.PageSize);
 
         return new PagedResponse<UserResponse>
         {
@@ -149,6 +162,10 @@ public class UserService : BaseService
         return user;
     }
 
+    // =========================
+    // Create
+    // =========================
+
     public async Task<UserResponse> Create(
         CreateUserRequest request,
         CancellationToken cancellationToken)
@@ -159,19 +176,54 @@ public class UserService : BaseService
             email,
             cancellationToken: cancellationToken);
 
-        var user = new User
+        await using var transaction =
+            await Context.Database.BeginTransactionAsync(
+                cancellationToken);
+
+        try
         {
-            Name = request.Name.Trim(),
-            Email = email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
-        };
+            var user = new User
+            {
+                Name = request.Name.Trim(),
+                Email = email,
+                PasswordHash =
+                    BCrypt.Net.BCrypt.HashPassword(
+                        request.Password)
+            };
 
-        Context.Users.Add(user);
+            Context.Users.Add(user);
 
-        await Context.SaveChangesAsync(cancellationToken);
+            // Save pertama untuk mendapatkan User.Id.
+            await Context.SaveChangesAsync(
+                cancellationToken);
 
-        return UserMapper.ToUserResponse(user);
+            _activityLogService.Add(
+                action: "Create",
+                entityType: "User",
+                entityId: user.Id,
+                description: $"Created user {user.Email}");
+
+            // Save kedua menyimpan ActivityLog.
+            await Context.SaveChangesAsync(
+                cancellationToken);
+
+            await transaction.CommitAsync(
+                cancellationToken);
+
+            return UserMapper.ToUserResponse(user);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(
+                cancellationToken);
+
+            throw;
+        }
     }
+
+    // =========================
+    // Update
+    // =========================
 
     public async Task<UserResponse> Update(
         int id,
@@ -189,17 +241,31 @@ public class UserService : BaseService
         user.Role = request.Role!.Value;
         user.Status = request.Status!.Value;
 
-        await Context.SaveChangesAsync(cancellationToken);
+        _activityLogService.Add(
+            action: "Update",
+            entityType: "User",
+            entityId: user.Id,
+            description: $"Updated user {user.Email}");
+
+        await Context.SaveChangesAsync(
+            cancellationToken);
 
         return UserMapper.ToUserResponse(user);
     }
+
+    // =========================
+    // Delete
+    // =========================
 
     public async Task Delete(
         int id,
         CancellationToken cancellationToken)
     {
         if (CurrentUserId == id)
-            throw new ForbiddenException("You cannot delete your own account.");
+        {
+            throw new ForbiddenException(
+                "You cannot delete your own account.");
+        }
 
         var user = await GetUserOrThrow(
             id,
@@ -208,7 +274,14 @@ public class UserService : BaseService
         user.DeletedAt = DateTime.UtcNow;
         user.DeletedBy = CurrentUserId;
 
-        await Context.SaveChangesAsync(cancellationToken);
+        _activityLogService.Add(
+            action: "Delete",
+            entityType: "User",
+            entityId: user.Id,
+            description: $"Deleted user {user.Email}");
+
+        await Context.SaveChangesAsync(
+            cancellationToken);
     }
 
     // =========================
@@ -218,8 +291,9 @@ public class UserService : BaseService
     public async Task<UserResponse> GetCurrentProfile(
         CancellationToken cancellationToken)
     {
-        var currentUser = await CurrentUserService.GetReadOnlyAsync(
-            cancellationToken);
+        var currentUser =
+            await CurrentUserService.GetReadOnlyAsync(
+                cancellationToken);
 
         return UserMapper.ToUserResponse(currentUser);
     }
@@ -228,7 +302,8 @@ public class UserService : BaseService
         UpdateProfileRequest request,
         CancellationToken cancellationToken)
     {
-        var currentUser = await GetCurrentUser(cancellationToken);
+        var currentUser =
+            await GetCurrentUser(cancellationToken);
 
         Context.Entry(currentUser)
             .Property(u => u.Version)
@@ -247,10 +322,18 @@ public class UserService : BaseService
         if (!string.IsNullOrWhiteSpace(request.Password))
         {
             currentUser.PasswordHash =
-                BCrypt.Net.BCrypt.HashPassword(request.Password);
+                BCrypt.Net.BCrypt.HashPassword(
+                    request.Password);
         }
 
-        await Context.SaveChangesAsync(cancellationToken);
+        _activityLogService.Add(
+            action: "Update",
+            entityType: "User",
+            entityId: currentUser.Id,
+            description: "Updated own profile");
+
+        await Context.SaveChangesAsync(
+            cancellationToken);
 
         return UserMapper.ToUserResponse(currentUser);
     }

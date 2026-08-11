@@ -110,6 +110,7 @@ builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<TicketService>();
 builder.Services.AddScoped<CommentService>();
+builder.Services.AddScoped<ActivityLogService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(

@@ -13,11 +13,15 @@ namespace Helpdesk.Services;
 
 public class TicketService : BaseService
 {
+    private readonly ActivityLogService _activityLogService;
+
     public TicketService(
         AppDbContext context,
-        CurrentUserService currentUserService)
+        CurrentUserService currentUserService,
+        ActivityLogService activityLogService)
         : base(context, currentUserService)
     {
+        _activityLogService = activityLogService;
     }
 
     private async Task<Ticket> GetTicketOrThrow(
@@ -53,13 +57,19 @@ public class TicketService : BaseService
         return ticket;
     }
 
+    // =========================
+    // Read
+    // =========================
+
     public async Task<PagedResponse<TicketListResponse>> GetAll(
         TicketQueryRequest request,
         CancellationToken cancellationToken)
     {
-        var currentUser = await GetCurrentUser(cancellationToken);
+        var currentUser = await GetCurrentUser(
+            cancellationToken);
 
-        IQueryable<Ticket> query = Context.Tickets.AsNoTracking();
+        IQueryable<Ticket> query =
+            Context.Tickets.AsNoTracking();
 
         if (currentUser.Role != Role.Admin)
         {
@@ -163,36 +173,67 @@ public class TicketService : BaseService
         return ticket;
     }
 
+    // =========================
+    // Create
+    // =========================
+
     public async Task<TicketDetailResponse> Create(
         CreateMyTicketRequest request,
         CancellationToken cancellationToken)
     {
-        var ticket = new Ticket
+        await using var transaction =
+            await Context.Database.BeginTransactionAsync(
+                cancellationToken);
+
+        try
         {
-            Title = request.Title.Trim(),
-            Description = request.Description.Trim(),
+            var ticket = new Ticket
+            {
+                Title = request.Title.Trim(),
+                Description = request.Description.Trim(),
+                UserId = CurrentUserId!.Value,
+                Priority = TicketPriority.Medium,
+                Status = TicketStatus.Open
+            };
 
-            UserId = CurrentUserId!.Value,
+            Context.Tickets.Add(ticket);
 
-            Priority = TicketPriority.Medium,
-            Status = TicketStatus.Open,
-        };
+            // Save pertama untuk mendapatkan Id.
+            await Context.SaveChangesAsync(
+                cancellationToken);
 
-        Context.Tickets.Add(ticket);
+            ticket.TicketNumber =
+                $"TKT-{DateTime.UtcNow:yyyy}-{ticket.Id:D6}";
 
-        await Context.SaveChangesAsync(
-            cancellationToken);
+            _activityLogService.Add(
+                action: "Create",
+                entityType: "Ticket",
+                entityId: ticket.Id,
+                description: $"Created ticket {ticket.TicketNumber}");
 
-        ticket.TicketNumber =
-            $"TKT-{DateTime.UtcNow:yyyy}-{ticket.Id:D6}";
+            // Save kedua menyimpan TicketNumber + ActivityLog.
+            await Context.SaveChangesAsync(
+                cancellationToken);
 
-        await Context.SaveChangesAsync(
-            cancellationToken);
+            await transaction.CommitAsync(
+                cancellationToken);
 
-        return await GetById(
-            ticket.Id,
-            cancellationToken);
+            return await GetById(
+                ticket.Id,
+                cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(
+                cancellationToken);
+
+            throw;
+        }
     }
+
+    // =========================
+    // Update
+    // =========================
 
     public async Task<TicketDetailResponse> UpdateMyTicket(
         int id,
@@ -218,6 +259,12 @@ public class TicketService : BaseService
         ticket.Title = request.Title.Trim();
         ticket.Description = request.Description.Trim();
 
+        _activityLogService.Add(
+            action: "Update",
+            entityType: "Ticket",
+            entityId: ticket.Id,
+            description: $"Updated ticket {ticket.TicketNumber}");
+
         await Context.SaveChangesAsync(
             cancellationToken);
 
@@ -237,7 +284,8 @@ public class TicketService : BaseService
         var currentUser = await GetCurrentUser(
             cancellationToken);
 
-        AuthorizationHelper.EnsureAdmin(currentUser);
+        AuthorizationHelper.EnsureAdmin(
+            currentUser);
 
         Context.Entry(ticket)
             .Property(t => t.Version)
@@ -246,11 +294,21 @@ public class TicketService : BaseService
         ticket.Priority = request.Priority!.Value;
         ticket.Status = request.Status!.Value;
 
+        _activityLogService.Add(
+            action: "Update",
+            entityType: "Ticket",
+            entityId: ticket.Id,
+            description: $"Admin updated ticket {ticket.TicketNumber}");
+
         await Context.SaveChangesAsync(
             cancellationToken);
 
         return TicketMapper.ToDetailResponse(ticket);
     }
+
+    // =========================
+    // Delete
+    // =========================
 
     public async Task Delete(
         int id,
@@ -269,6 +327,12 @@ public class TicketService : BaseService
 
         ticket.DeletedAt = DateTime.UtcNow;
         ticket.DeletedBy = CurrentUserId;
+
+        _activityLogService.Add(
+            action: "Delete",
+            entityType: "Ticket",
+            entityId: ticket.Id,
+            description: $"Deleted ticket {ticket.TicketNumber}");
 
         await Context.SaveChangesAsync(
             cancellationToken);

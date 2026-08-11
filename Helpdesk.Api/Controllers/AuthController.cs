@@ -32,26 +32,13 @@ public class AuthController : ControllerBase
     // }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginRequest request)
+    public async Task<IActionResult> Login(
+        LoginRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _authService.Login(request);
-
-        return Ok(result);
-    }
-
-    [Authorize]
-    [HttpGet("me")]
-    public async Task<IActionResult> Me()
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (!int.TryParse(userId, out var id))
-            return Unauthorized();
-
-        var result = await _authService.Me(id);
-
-
-        return Ok(result);
+        return Ok(await _authService.Login(
+            request,
+            cancellationToken));
     }
 
     [HttpPost("logout")]

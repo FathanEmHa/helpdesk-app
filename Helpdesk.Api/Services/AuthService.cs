@@ -3,7 +3,6 @@ using Helpdesk.Data;
 using Helpdesk.Dtos.Auth;
 using Helpdesk.Models;
 using Helpdesk.Exceptions;
-using Helpdesk.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Helpdesk.Services;
@@ -13,51 +12,43 @@ public class AuthService
     private readonly AppDbContext _context;
     private readonly JwtService _jwtService;
 
-    public AuthService(AppDbContext context, JwtService jwtService)
+    public AuthService(
+        AppDbContext context,
+        JwtService jwtService)
     {
         _context = context;
         _jwtService = jwtService;
     }
 
-    public async Task<AuthResponse> Login(LoginRequest request)
+    public async Task<AuthResponse> Login(
+        LoginRequest request,
+        CancellationToken cancellationToken)
     {
         var user = await _context.Users
-            .FirstOrDefaultAsync(u =>
-                u.Email == request.Email &&
-                u.Status == UserStatus.Active);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                u =>
+                    u.Email == request.Email &&
+                    u.Status == UserStatus.Active,
+                cancellationToken);
 
         if (user == null)
-            throw new UnauthorizedException("Invalid email or password.");
+            throw new UnauthorizedException(
+                "Invalid email or password.");
 
         var validPassword = BCrypt.Net.BCrypt.Verify(
             request.Password,
-            user.PasswordHash
-        );
+            user.PasswordHash);
 
         if (!validPassword)
-            throw new UnauthorizedException("Invalid email or password.");
+            throw new UnauthorizedException(
+                "Invalid email or password.");
 
         var token = _jwtService.GenerateToken(user);
 
         return new AuthResponse
         {
             Token = token,
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email,
-            Role = user.Role.ToString()
-        };
-    }
-
-    public async Task<MeResponse?> Me(int id)
-    {
-        var user = await _context.Users.FindAsync(id);
-
-        if (user == null)
-            throw new NotFoundException("User not found.");
-
-        return new MeResponse
-        {
             Id = user.Id,
             Name = user.Name,
             Email = user.Email,
