@@ -1,15 +1,15 @@
 import { Outlet } from "react-router";
+import Navbar from "./Navbar";
+import Sidebar from "./Sidebar";
 
-export default function MainLayout() {
+function MainLayout() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="h-14 border-b">
-        Navbar
-      </header>
+      <Navbar />
 
-      <div className="flex min-h-[calc(100vh-3.5rem)]">
+      <div className="flex min-h-[calc(100vh-4rem)]">
         <aside className="w-64 shrink-0 border-r p-4">
-          Sidebar
+          <Sidebar />
         </aside>
 
         <main className="flex-1 p-6">
@@ -19,3 +19,5 @@ export default function MainLayout() {
     </div>
   );
 }
+
+export default MainLayout;
