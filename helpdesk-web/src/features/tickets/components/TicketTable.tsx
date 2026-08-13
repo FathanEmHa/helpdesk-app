@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 interface Ticket {
   id: string;
   title: string;
@@ -41,7 +43,12 @@ function TicketTable({ tickets }: TicketTableProps) {
                 className="border-b last:border-b-0 hover:bg-muted/30"
               >
                 <td className="whitespace-nowrap px-4 py-3 font-medium">
-                  #{ticket.id}
+                  <Link
+                    to={`/tickets/${ticket.id}`}
+                    className="hover:underline"
+                  >
+                    #{ticket.id}
+                  </Link>
                 </td>
 
                 <td className="px-4 py-3">
