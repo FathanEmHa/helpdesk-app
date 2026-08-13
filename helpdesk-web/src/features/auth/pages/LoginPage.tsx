@@ -1,17 +1,38 @@
 import { useState, type FormEvent } from "react";
 import { LockKeyhole, Mail } from "lucide-react";
+import { login } from "../api/authApi";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
 
-    console.log({
-      email,
-      password,
-    });
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const response = await login({
+        email,
+        password,
+      });
+
+      console.log(response);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Login failed.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -27,7 +48,10 @@ function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-5"
+        >
           <div className="space-y-2">
             <label
               htmlFor="email"
@@ -46,7 +70,9 @@ function LoginPage() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) =>
+                  setEmail(event.target.value)
+                }
                 placeholder="you@example.com"
                 autoComplete="email"
                 required
@@ -73,7 +99,9 @@ function LoginPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) =>
+                  setPassword(event.target.value)
+                }
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
@@ -82,11 +110,18 @@ function LoginPage() {
             </div>
           </div>
 
+          {error && (
+            <p className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+
           <button
             type="submit"
-            className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+            disabled={isLoading}
+            className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Sign in
+            {isLoading ? "Signing in..." : "Sign in"}
           </button>
         </form>
       </div>

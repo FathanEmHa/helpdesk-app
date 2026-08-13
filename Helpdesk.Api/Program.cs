@@ -30,6 +30,17 @@ builder.Services.AddControllers(options =>
         new JsonStringEnumConverter());
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
@@ -144,6 +155,12 @@ using (var scope = app.Services.CreateScope())
 
     await db.Database.MigrateAsync();
 }
+
+app.UseHttpsRedirection();
+
+app.UseRouting();
+
+app.UseCors("Frontend");
 
 app.UseExceptionMiddleware();
 
