@@ -1,56 +1,53 @@
-import { Link } from "react-router";
-import { Plus, Search } from "lucide-react";
-import TicketTable from "../components/TicketTable";
+import { Search } from "lucide-react";
+import AdminTicketTable from "../components/AdminTicketTable";
 
 const tickets = [
   {
     id: "TCK-001",
     title: "Cannot access email",
+    requester: "John Doe",
     status: "Open",
     priority: "High",
+    createdAt: "Aug 13, 2026",
   },
   {
     id: "TCK-002",
     title: "Printer problem",
+    requester: "Jane Smith",
     status: "Resolved",
     priority: "Medium",
+    createdAt: "Aug 12, 2026",
   },
   {
     id: "TCK-003",
     title: "VPN connection issue",
+    requester: "Michael Lee",
     status: "Pending",
     priority: "Low",
+    createdAt: "Aug 12, 2026",
   },
   {
     id: "TCK-004",
     title: "Unable to access internal system",
+    requester: "Sarah Wilson",
     status: "Open",
     priority: "High",
+    createdAt: "Aug 11, 2026",
   },
 ];
 
-function TicketsPage() {
+function AdminTicketsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Tickets
-          </h1>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Manage Tickets
+        </h1>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            Manage your support requests.
-          </p>
-        </div>
-
-        <Link
-          to="/tickets/new"
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-        >
-          <Plus size={18} />
-          New Ticket
-        </Link>
+        <p className="mt-1 text-sm text-muted-foreground">
+          View and manage all support tickets.
+        </p>
       </div>
 
       {/* Filters */}
@@ -92,7 +89,7 @@ function TicketsPage() {
       </div>
 
       {/* Table */}
-      <TicketTable tickets={tickets} />
+      <AdminTicketTable tickets={tickets} />
 
       {/* Pagination */}
       <div className="flex items-center justify-between">
@@ -128,4 +125,4 @@ function TicketsPage() {
   );
 }
 
-export default TicketsPage;
+export default AdminTicketsPage;
