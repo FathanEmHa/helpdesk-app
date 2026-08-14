@@ -1,9 +1,20 @@
-import { useState, type FormEvent } from "react";
+import { useState, useContext, type FormEvent } from "react";
 import { LockKeyhole, Mail } from "lucide-react";
-import { login } from "../api/authApi";
-import { saveAuth } from "../authStorage";
+
+import { login as loginApi } from "../api/authApi";
+import { AuthContext } from "../AuthContext";
 
 function LoginPage() {
+  const authContext = useContext(AuthContext);
+
+  if (!authContext) {
+    throw new Error(
+      "LoginPage must be used within AuthProvider.",
+    );
+  }
+
+  const { login } = authContext;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -19,12 +30,12 @@ function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await login({
+      const response = await loginApi({
         email,
         password,
       });
 
-      saveAuth(response);
+      login(response);
     } catch (error) {
       setError(
         error instanceof Error
