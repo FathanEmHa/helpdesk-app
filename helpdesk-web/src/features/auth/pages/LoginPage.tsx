@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { LockKeyhole, Mail } from "lucide-react";
 import { login } from "../api/authApi";
+import { saveAuth } from "../authStorage";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
@@ -23,7 +24,7 @@ function LoginPage() {
         password,
       });
 
-      console.log(response);
+      saveAuth(response);
     } catch (error) {
       setError(
         error instanceof Error
