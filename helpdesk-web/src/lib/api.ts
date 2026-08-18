@@ -1,5 +1,13 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(
+  handler: () => void,
+) {
+  unauthorizedHandler = handler;
+}
+
 export async function apiFetch<T>(
   endpoint: string,
   options?: RequestInit,
@@ -14,6 +22,14 @@ export async function apiFetch<T>(
 
   if (!response.ok) {
     const errorData = await response.json();
+
+    if (response.status === 401) {
+      unauthorizedHandler?.();
+
+      throw new Error(
+        errorData.message ?? "Unauthorized.",
+      );
+    }
 
     throw new Error(
       errorData.message ?? "Request failed.",

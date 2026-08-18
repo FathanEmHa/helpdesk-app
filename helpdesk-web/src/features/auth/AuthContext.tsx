@@ -12,6 +12,7 @@ import {
 } from "./authStorage";
 
 import type { AuthResponse } from "./types";
+import { setUnauthorizedHandler } from "../../lib/api";
 
 interface AuthContextValue {
   auth: AuthResponse | null;
@@ -41,6 +42,19 @@ export function AuthProvider({
 
     setAuth(storedAuth);
     setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      setAuth((currentAuth) => {
+        if (currentAuth) {
+          clearStoredAuth();
+          return null;
+        }
+
+        return currentAuth;
+      });
+    });
   }, []);
 
   function login(authResponse: AuthResponse) {
