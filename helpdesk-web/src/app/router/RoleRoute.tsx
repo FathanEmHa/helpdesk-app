@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from "react-router";
+import { useAuth } from "../../features/auth/hooks/useAuth";
 
 interface RoleRouteProps {
   allowedRoles: string[];
@@ -7,11 +8,11 @@ interface RoleRouteProps {
 function RoleRoute({
   allowedRoles,
 }: RoleRouteProps) {
-  // Temporary role.
-  // Will be replaced by AuthContext in Phase 3.
-  const userRole = "User";
+  const { auth } = useAuth();
 
-  if (!allowedRoles.includes(userRole)) {
+  const userRole = auth?.role;
+
+  if (!userRole || !allowedRoles.includes(userRole)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

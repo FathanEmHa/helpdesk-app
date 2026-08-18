@@ -1,10 +1,12 @@
 import { useState, useContext, type FormEvent } from "react";
+import { useNavigate } from "react-router";
 import { LockKeyhole, Mail } from "lucide-react";
 
 import { login as loginApi } from "../api/authApi";
 import { useAuth } from "../hooks/useAuth";
 
 function LoginPage() {
+  const navigate = useNavigate();
   const { login } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -28,6 +30,16 @@ function LoginPage() {
       });
 
       login(response);
+
+      if (response.role === "Admin") {
+        navigate("/admin/tickets", {
+          replace: true,
+        });
+      } else {
+        navigate("/dashboard", {
+          replace: true,
+        });
+      }
     } catch (error) {
       setError(
         error instanceof Error
