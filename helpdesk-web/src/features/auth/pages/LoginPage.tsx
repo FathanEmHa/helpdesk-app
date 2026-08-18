@@ -2,18 +2,10 @@ import { useState, useContext, type FormEvent } from "react";
 import { LockKeyhole, Mail } from "lucide-react";
 
 import { login as loginApi } from "../api/authApi";
-import { AuthContext } from "../AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 function LoginPage() {
-  const authContext = useContext(AuthContext);
-
-  if (!authContext) {
-    throw new Error(
-      "LoginPage must be used within AuthProvider.",
-    );
-  }
-
-  const { login } = authContext;
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

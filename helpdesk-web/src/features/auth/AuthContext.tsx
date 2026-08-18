@@ -16,6 +16,7 @@ import type { AuthResponse } from "./types";
 interface AuthContextValue {
   auth: AuthResponse | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (auth: AuthResponse) => void;
   logout: () => void;
 }
@@ -33,10 +34,13 @@ export function AuthProvider({
   const [auth, setAuth] =
     useState<AuthResponse | null>(null);
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const storedAuth = getStoredAuth();
 
     setAuth(storedAuth);
+    setIsLoading(false);
   }, []);
 
   function login(authResponse: AuthResponse) {
@@ -56,6 +60,7 @@ export function AuthProvider({
       value={{
         auth,
         isAuthenticated,
+        isLoading,
         login,
         logout,
       }}
