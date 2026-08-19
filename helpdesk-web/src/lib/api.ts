@@ -1,4 +1,5 @@
 import { getStoredAuth } from "../features/auth/authStorage";
+import { ApiError } from "./apiError";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -16,32 +17,52 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const auth = getStoredAuth();
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
+  let response: Response;
 
-      ...(auth?.token && {
-        Authorization: `Bearer ${auth.token}`,
-      }),
+  try {
+    response = await fetch(
+      `${API_URL}${endpoint}`,
+      {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
 
-      ...options?.headers,
-    },
-  });
+          ...(auth?.token && {
+            Authorization: `Bearer ${auth.token}`,
+          }),
+
+          ...options?.headers,
+        },
+      },
+    );
+  } catch {
+    throw new ApiError(
+      "Unable to connect to the server.",
+      0,
+    );
+  }
 
   if (!response.ok) {
-    const errorData = await response.json();
+    let errorData: {
+      message?: string;
+      errors?: string[];
+    } = {};
+
+    try {
+      errorData = await response.json();
+    } catch {
+      // Response tidak memiliki JSON body.
+    }
 
     if (response.status === 401) {
       unauthorizedHandler?.();
-
-      throw new Error(
-        errorData.message ?? "Unauthorized.",
-      );
     }
 
-    throw new Error(
-      errorData.message ?? "Request failed.",
+    throw new ApiError(
+      errorData.message ??
+        "Something went wrong.",
+      response.status,
+      errorData.errors ?? [],
     );
   }
 
