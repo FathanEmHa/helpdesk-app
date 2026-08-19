@@ -1,3 +1,5 @@
+import type { CommentResponse } from "../comments/types";
+
 export type TicketStatus =
   | "Open"
   | "InProgress"
@@ -53,17 +55,6 @@ export interface TicketListResponse {
   userName: string;
   commentCount: number;
   createdAt: string;
-}
-
-export interface CommentResponse {
-  id: number;
-  content: string;
-  ticketId: number;
-  userId: number;
-  userName: string;
-  createdAt: string;
-  updatedAt: string | null;
-  version: number;
 }
 
 export interface TicketDetailResponse {
