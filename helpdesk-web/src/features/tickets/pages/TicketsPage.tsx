@@ -1,35 +1,65 @@
+import { useEffect, useState } from "react";
+import { getTickets } from "../api/ticketApi";
+import type { TicketListResponse } from "../types";
+import { ApiError } from "../../../lib/apiError";
 import { Link } from "react-router";
 import { Plus, Search } from "lucide-react";
 import TicketTable from "../components/TicketTable";
 
-const tickets = [
-  {
-    id: "TCK-001",
-    title: "Cannot access email",
-    status: "Open",
-    priority: "High",
-  },
-  {
-    id: "TCK-002",
-    title: "Printer problem",
-    status: "Resolved",
-    priority: "Medium",
-  },
-  {
-    id: "TCK-003",
-    title: "VPN connection issue",
-    status: "Pending",
-    priority: "Low",
-  },
-  {
-    id: "TCK-004",
-    title: "Unable to access internal system",
-    status: "Open",
-    priority: "High",
-  },
-];
-
 function TicketsPage() {
+  const [tickets, setTickets] = useState<
+    TicketListResponse[]
+  >([]);
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchTickets() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await getTickets();
+
+        setTickets(response.items);
+      } catch (error) {
+        if (error instanceof ApiError) {
+          setError(error.message);
+        } else {
+          setError("Failed to load tickets.");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchTickets();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-muted-foreground">
+          Loading tickets...
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-destructive">
+          {error}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
