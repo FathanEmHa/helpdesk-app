@@ -11,6 +11,15 @@ function TicketsPage() {
     TicketListResponse[]
   >([]);
 
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+
+  const [totalItems, setTotalItems] =
+    useState(0);
+
+  const [totalPages, setTotalPages] =
+    useState(0);
+
   const [isLoading, setIsLoading] =
     useState(true);
 
@@ -23,9 +32,14 @@ function TicketsPage() {
       setError(null);
 
       try {
-        const response = await getTickets();
+        const response = await getTickets({
+          page,
+          pageSize,
+        });
 
         setTickets(response.items);
+        setTotalItems(response.totalItems);
+        setTotalPages(response.totalPages);
       } catch (error) {
         if (error instanceof ApiError) {
           setError(error.message);
@@ -38,7 +52,7 @@ function TicketsPage() {
     }
 
     fetchTickets();
-  }, []);
+  }, [page, pageSize]);
 
   if (isLoading) {
     return (
@@ -102,22 +116,34 @@ function TicketsPage() {
           defaultValue="all"
           className="rounded-md border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
         >
-          <option value="all">All statuses</option>
-          <option value="pending">Pending</option>
+          <option value="all">
+            All statuses
+          </option>
           <option value="open">Open</option>
-          <option value="in-progress">In Progress</option>
-          <option value="resolved">Resolved</option>
-          <option value="closed">Closed</option>
+          <option value="in-progress">
+            In Progress
+          </option>
+          <option value="resolved">
+            Resolved
+          </option>
+          <option value="closed">
+            Closed
+          </option>
         </select>
 
         <select
           defaultValue="all"
           className="rounded-md border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
         >
-          <option value="all">All priorities</option>
+          <option value="all">
+            All priorities
+          </option>
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
+          <option value="critical">
+            Critical
+          </option>
         </select>
       </div>
 
@@ -127,28 +153,49 @@ function TicketsPage() {
       {/* Pagination */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing 1–4 of 4 tickets
+          Showing{" "}
+          {totalItems === 0
+            ? 0
+            : (page - 1) * pageSize + 1}
+          –
+          {Math.min(
+            page * pageSize,
+            totalItems,
+          )}{" "}
+          of {totalItems} tickets
         </p>
 
         <div className="flex items-center gap-1">
           <button
             type="button"
-            disabled
+            disabled={page === 1 || isLoading}
+            onClick={() =>
+              setPage(
+                (current) => current - 1,
+              )
+            }
             className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             Previous
           </button>
 
-          <button
-            type="button"
-            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
-          >
-            1
-          </button>
+          <span className="px-3 py-2 text-sm">
+            {page} / {totalPages}
+          </span>
 
           <button
             type="button"
-            className="rounded-md border px-3 py-2 text-sm"
+            disabled={
+              page === totalPages ||
+              isLoading ||
+              totalPages === 0
+            }
+            onClick={() =>
+              setPage(
+                (current) => current + 1,
+              )
+            }
+            className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             Next
           </button>
