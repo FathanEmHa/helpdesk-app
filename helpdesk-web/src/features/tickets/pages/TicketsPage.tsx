@@ -16,6 +16,8 @@ function TicketsPage() {
   const [pageSize] = useState(10);
 
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+
   const debouncedSearch = useDebounce(
     search,
     500,
@@ -43,6 +45,7 @@ function TicketsPage() {
           page,
           pageSize,
           search: debouncedSearch || undefined,
+          status: status || undefined,
         });
 
         setTickets(response.items);
@@ -64,6 +67,7 @@ function TicketsPage() {
     page,
     pageSize,
     debouncedSearch,
+    status,
   ]);
 
   if (isLoading) {
@@ -130,20 +134,24 @@ function TicketsPage() {
         </div>
 
         <select
-          defaultValue="all"
+          value={status}
+          onChange={(event) => {
+            setStatus(event.target.value);
+            setPage(1);
+          }}
           className="rounded-md border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
         >
-          <option value="all">
+          <option value="">
             All statuses
           </option>
-          <option value="open">Open</option>
-          <option value="in-progress">
+          <option value="Open">Open</option>
+          <option value="InProgress">
             In Progress
           </option>
-          <option value="resolved">
+          <option value="Resolved">
             Resolved
           </option>
-          <option value="closed">
+          <option value="Closed">
             Closed
           </option>
         </select>
