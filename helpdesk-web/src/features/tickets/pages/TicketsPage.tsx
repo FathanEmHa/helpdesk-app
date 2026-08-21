@@ -14,6 +14,8 @@ function TicketsPage() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
 
+  const [search, setSearch] = useState("");
+
   const [totalItems, setTotalItems] =
     useState(0);
 
@@ -35,6 +37,7 @@ function TicketsPage() {
         const response = await getTickets({
           page,
           pageSize,
+          search: search || undefined,
         });
 
         setTickets(response.items);
@@ -52,7 +55,7 @@ function TicketsPage() {
     }
 
     fetchTickets();
-  }, [page, pageSize]);
+  }, [page, pageSize, search]);
 
   if (isLoading) {
     return (
@@ -107,6 +110,11 @@ function TicketsPage() {
 
           <input
             type="search"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
             placeholder="Search tickets..."
             className="w-full rounded-md border bg-background py-2.5 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
