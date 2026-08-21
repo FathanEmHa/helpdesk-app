@@ -5,6 +5,7 @@ import { ApiError } from "../../../lib/apiError";
 import { Link } from "react-router";
 import { Plus, Search } from "lucide-react";
 import TicketTable from "../components/TicketTable";
+import useDebounce from "../../../hooks/useDebounce";
 
 function TicketsPage() {
   const [tickets, setTickets] = useState<
@@ -15,6 +16,10 @@ function TicketsPage() {
   const [pageSize] = useState(10);
 
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(
+    search,
+    500,
+  );
 
   const [totalItems, setTotalItems] =
     useState(0);
@@ -37,7 +42,7 @@ function TicketsPage() {
         const response = await getTickets({
           page,
           pageSize,
-          search: search || undefined,
+          search: debouncedSearch || undefined,
         });
 
         setTickets(response.items);
@@ -55,7 +60,11 @@ function TicketsPage() {
     }
 
     fetchTickets();
-  }, [page, pageSize, search]);
+  }, [
+    page,
+    pageSize,
+    debouncedSearch,
+  ]);
 
   if (isLoading) {
     return (
